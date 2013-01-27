@@ -8,10 +8,10 @@ allFriends = []
 
 #will need to hide these eventually. ideas welcome!
 #possibly just hidden dir if eventually daemon?
-CONSUMER_KEY = 'XldG48dh2WzV4XMvhDaA'
-CONSUMER_SECRET = '1c429FQnjAzaFwOhzwJC3h4qEi4YwR7UhW2ickl5kc'
-ACCESS_TOKEN_KEY = '1112662302-lEnMQewEG47MJw9yWN0lMOQdk5DHaqEU7FgDM2V'
-ACCESS_TOKEN_SECRET = 'LwlVCS5fwqVmkvlwqQiB5Z7PepnITzq9ynUr8NPkA'
+CONSUMER_KEY = 'consumer key'
+CONSUMER_SECRET = 'consumer secret'
+ACCESS_TOKEN_KEY = 'access token'
+ACCESS_TOKEN_SECRET = 'access secret'
 
 ID_INDEX = 'ids'
 	
