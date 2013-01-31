@@ -1,0 +1,16 @@
+Product Backlog
+	
+TASK DESCRIPTION			            		ORIGIN	 	STATUS
+			
+Create a sentiment analyzer structure that can classify		Darrel		Complete 
+files with the movie review corpus.		
+
+Create a corpora from tweet data that will train the 
+classifier to sort positive and negative tweets.		Darrel		Pending
+
+Create a corpora from tweet data that will train the
+classifier to sort useful and trash tweets.			Darrel		Pending
+
+Construct a program to enable faster tweet labeling		Darrel		Complete
+
+                							
