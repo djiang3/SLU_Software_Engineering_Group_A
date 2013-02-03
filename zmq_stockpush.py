@@ -3,8 +3,16 @@ import yql
 import time
 import json
 import zmq
+import sys
 
 if __name__ == "__main__":
+  if len(sys.argv) < 2:
+    print "usage: zmq_stockpush.py TICKER [TICKER TICKER...]"
+
+  pprint.pprint(sys.argv)
+
+  exit()
+
   # connect to zmq
   print "connecting to server..."
   y = getyql.getyql()
