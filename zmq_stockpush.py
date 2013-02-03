@@ -4,6 +4,7 @@ import time
 import json
 import zmq
 import sys
+import pprint
 
 if __name__ == "__main__":
   if len(sys.argv) < 2:
@@ -11,7 +12,10 @@ if __name__ == "__main__":
 
   pprint.pprint(sys.argv)
 
-  exit()
+  tickers = []
+
+  for itr in range( len(sys.argv)-1 ):
+    tickers.append(sys.argv[itr+1])
 
   # connect to zmq
   print "connecting to server..."
@@ -22,18 +26,21 @@ if __name__ == "__main__":
   socket.connect ("tcp://localhost:5555")
 
   for request in range (10):
-    #request google
-    result = y.Instant("GOOG")
-    timestamp = time.time()
+    for stock in tickers:
+      #request google
+      result = y.Instant(stock)
+      timestamp = time.time()
 
-    # format data package
-    dataset = {'type' : "stock_push", 'symbol' : result[0]["symbol"], 'price' : result[0]["AskRealtime"], 'timestamp' : timestamp}
-    message = json.dumps(dataset)
+      # format data package
+      dataset = {'type' : "stock_push", 'symbol' : result[0]["symbol"], 'price' : result[0]["AskRealtime"], 'timestamp' : timestamp, 'clientname':'Steve'}
+      message = json.dumps(dataset)
+      pprint.pprint(dataset)
 
-    # send data package
-    print "Sending stock ", request, "..."
-    socket.send(message)
+      # send data package
+      print "Sending stock ", request, ", ticker ", stock, "..."
+      socket.send(message)
 
-    # wait for reply
-    message = socket.recv()
-    print "Received reply ", request, "[", message, "]"
+      # wait for reply
+      message = socket.recv()
+      print "Received reply ", request, "[", message, "]"
+
