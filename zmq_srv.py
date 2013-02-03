@@ -30,11 +30,19 @@ while True:
     # interpret the query and run database operation
     if rcvd['type'] == "stock_push":
       # did we receive a raw stock value to store?
+      print "stock push request received for %s from %s" % (rcvd['symbol'], rcvd['clientname'])
       c.execute("INSERT INTO stocks VALUES (NULL, %d, '%s', '%s')" % (rcvd['timestamp'], rcvd['symbol'], rcvd['price']))
       sdb.conn.commit()
       print "added %s into database" % rcvd['symbol']
+      socket.send("Ack")
+    elif rcvd['type'] == "stock_pull":
+      print "stock pull request received for %s from %s" % (rcvd['symbol'], rcvd['clientname'])
+      pulled_stocks = []
+      for row in c.execute("SELECT * FROM stocks WHERE symbol = '%s' order by timestamp" % rcvd['symbol']):
+        pulled_stocks.append(row)
+      message = json.dumps(pulled_stocks)
+      socket.send(message)
     else:
+      #  Send reply back to client
       print "received unknown query, ignoring"
-
-    #  Send reply back to client
-    socket.send("Ack")
+      socket.send("Ack")
