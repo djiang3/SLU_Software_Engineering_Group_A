@@ -5,23 +5,24 @@ import sys
 import pprint
 
 if __name__ == "__main__":
-  if len(sys.argv) < 2:
+  if len(sys.argv) < 3:
     print "usage: zmq_stockpull.py TICKER [TICKER TICKER...]"
+    pprint.pprint(sys.argv)
     exit()
 
-  pprint.pprint(sys.argv)
 
   tickers = []
 
-  for itr in range( len(sys.argv)-1 ):
-    tickers.append(sys.argv[itr+1])
+  for itr in range( len(sys.argv)-2 ):
+    tickers.append(sys.argv[itr+2])
 
   # connect to zmq
-  print "connecting to server..."
   context = zmq.Context()
 
   socket = context.socket(zmq.REQ)
-  socket.connect ("tcp://localhost:5555")
+  addr = ("tcp://%s:5555" % sys.argv[1])
+  print "connecting to server %s" % addr
+  socket.connect ( addr )
 
   for stock in tickers:
 
