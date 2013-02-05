@@ -13,4 +13,7 @@ classifier to sort useful and trash tweets.			Darrel		Pending
 
 Construct a program to enable faster tweet labeling		Darrel		Complete
 
-                							
+Construct TweetCache object for retrieving/updating           	Aaron		Pending
+tweets
+
+Create daemon script for TweetCache				Aaron		Pending
