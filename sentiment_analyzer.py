@@ -52,8 +52,8 @@ socket = context.socket(zmq.REP)
 socket.bind("tcp://*:5555")
  
 # Connect to the database.
-sdb = getyql.simpledb()
-c = sdb.conn.cursor()
+#sdb = getyql.simpledb()
+#c = sdb.conn.cursor()
 
 print "Server is running..."
 # Have the server run forever.
@@ -62,7 +62,6 @@ while True:
     # Wait for the next request from the client and load the message.
     message = socket.recv()
     rcvd = json.loads(message)
-
    
     # Handler for tweet_push type.
     if rcvd['type'] == "tweet_push":
@@ -71,10 +70,9 @@ while True:
         features = review_features(tokens)
         print rcvd['text']
        	print sentimentClassifier.classify(features), "\n"
-		#print "tweet recieved with a sentiment of %s" % (rcvd['sentiment'])
-        #c.execute("INSERT INTO tweets VALUES(NULL, '%s')" % (rcvd['sentiment']))
-        #sdb.conn.commit()
-        #print "added %s into database" % rcvd['sentiment']
+        data_set = { 'id':rcvd['id'] , 'date':rcvd['date'], 'sentiment' : sentimentClassifier.classify(features), 'type':"tweet_push"}
+        message = json.dumps(data_set)
+
         socket.send("Ack")
   
     else:
