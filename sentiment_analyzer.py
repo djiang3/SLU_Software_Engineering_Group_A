@@ -45,17 +45,45 @@ print "Training on ", len(trainSet), "individual files..."
 #The Naive Bayes Classifer, using the trainSet to train.
 sentimentClassifier = NaiveBayesClassifier.train(trainSet)
 
-# Setting up the connection to zmq server port 5555
-context = zmq.Context()
-socket = context.socket(zmq.REQ)
-socket.connect ("tcp://localhost:5555")
 
-# Wait for the next request from the client and load the message. 
-message = socket.recv()
-rcvd = json.loads(message)
+# Connect to the zmq server.
+context = zmq.Context()
+socket = context.socket(zmq.REP)
+socket.bind("tcp://*:5555")
+ 
+# Connect to the database.
+sdb = getyql.simpledb()
+c = sdb.conn.cursor()
+
+print "Server is running..."
+# Have the server run forever.
+while True:
+	
+    # Wait for the next request from the client and load the message.
+    message = socket.recv()
+    rcvd = json.loads(message)
+
+   
+    # Handler for tweet_push type.
+    if rcvd['type'] == "tweet_push":
+        
+        tokens = word_tokenize(rcvd['text'])
+        features = review_features(tokens)
+        print rcvd['text']
+       	print sentimentClassifier.classify(features), "\n"
+		#print "tweet recieved with a sentiment of %s" % (rcvd['sentiment'])
+        #c.execute("INSERT INTO tweets VALUES(NULL, '%s')" % (rcvd['sentiment']))
+        #sdb.conn.commit()
+        #print "added %s into database" % rcvd['sentiment']
+        socket.send("Ack")
+  
+    else:
+      # Send reply back to client that the query is unspecified.
+      print "received unknown query, ignoring"
+      socket.send("Ack")
 
 # Analyzes all tweets in the specified directory and sends the data to the zmq server through port 5555. Sends a dictionary value of its type and the corresponding sentiment rating.
-
+"""
 for files in os.listdir("."):
     if (files != '.DS_Store'):
         path = ('corpora/movie_reviews/neg/'+files)
@@ -70,7 +98,7 @@ for files in os.listdir("."):
         pprint.pprint(data_set)
         socket.send(message)
         message = socket.recv()
-
+"""
 
 
 

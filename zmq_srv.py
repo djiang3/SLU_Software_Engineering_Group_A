@@ -1,8 +1,9 @@
-#
-#   A server to handle pushes and pulls of stock and tweet information.
-#   Binds REP socket to tcp://*:5555
-#   Expects a type from the client and will send a confirmation reply accordingly.
-#
+"""
+ A server to handle pushes and pulls of stock and tweet information.
+ Binds REP socket to tcp://*:5555
+ Expects a type from the client and will send a confirmation reply accordingly.
+"""
+
 import zmq
 import time
 import sqlite3
@@ -52,7 +53,7 @@ while True:
         print "added %s into database" % rcvd['sentiment']
         socket.send("Ack")
   
-  	else:
+    else:
       # Send reply back to client that the query is unspecified.
       print "received unknown query, ignoring"
       socket.send("Ack")
