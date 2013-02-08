@@ -71,14 +71,16 @@ def main():
 	print 'initializing tweet cache...'
 
 	try:
-		cache = tweetcache.TweetCache(api, companies, useFriends=True, positiveTerms=positiveTerms)
+		cache = tweetcache.TweetCache(api, companies, positiveTerms=positiveTerms)
 	except twitter.TwitterError:
 		print "Could not authenticate API. Make sure all authentication keys are correct"
 		sys.exit(1)
 
-	allCacheTweets = cache.getCompanyTweets()
+	allCacheTweetDict = cache.getTweetsAsDicts()
+	for dict in allCacheTweetDict:
+		print dict['text'].encode(encoding='UTF-8')
 
-	#TODO add analyzer
+	#TODO send to analyzer
 
 
 if __name__ == '__main__':
