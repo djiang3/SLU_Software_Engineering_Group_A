@@ -1,41 +1,76 @@
-# A baby version of the sentiment analyzer.
+
+"""Sentiment analyzer that uses the Naive Bayes Classifier algorithm for classification along with the nltk movie_review corpora. 
+
+In its current state, it searches through a certain directory, analyzes all the text files in that directory and sends it to the zmq database with a dictionary value of its type and the sentiment rating."""
+
 
 import nltk.classify.util
 from nltk.classify import NaiveBayesClassifier
 from nltk.corpus import movie_reviews
 from nltk import word_tokenize, wordpunct_tokenize
 from nltk.corpus.reader import WordListCorpusReader
+import yql
+import json
+import zmq
 import os
+import pprint
+import urllib
+import simplejson
+import csv
+import time
+import sqlite3
+import getyql
 
-#Specify the directory of your data for your unique corpora. 
-#Test code, the foundation for using our own corpora to train the classifier.
-os.chdir("/Users/nltk_data/corpora/tweet_reviews")
+
+# Foundation code to incorporate our unique set of corpora, used to train the Naive Bayes Classifier on usefulness of a tweet and the sentiment of the tweet. This code will not be used until we begin to create are own data set for the trainer."""
+os.chdir("/Users/DJiang/nltk_data/corpora/movie_reviews/neg")
 tweet_review = nltk.corpus.reader.CategorizedPlaintextCorpusReader('.','.*\.txt', cat_pattern='(\w+)/*')
 
+# Feature set function that builds a dictionary from the reviews, with a value of either positive or negative, followed by the corresponding tweet.
 def review_features(review):
     return dict([(review, True) for review in review])
  
+# Acquires the IDs of the reviews by its sentiment and stores them into negID and posIDs. 
 negIDs = movie_reviews.fileids('neg')
 posIDs = movie_reviews.fileids('pos')
- 
+
+#Creates a large dictionary based on review_features of negative and positive reviews
 negReview = [(review_features(movie_reviews.words(fileids=[id])), 'neg') for id in negIDs]
 posReview = [(review_features(movie_reviews.words(fileids=[id])), 'pos') for id in posIDs]
- 
-trainSet = negReview[:len(negReview)] + posReview[:len(posReview)]
 
+# Tvhe populated training set of all positive and negative reviews in the movie_review corpora.
+trainSet = negReview[:len(negReview)] + posReview[:len(posReview)]
 print "Training on ", len(trainSet), "individual files..."
- 
+
+#The Naive Bayes Classifer, using the trainSet to train.
 sentimentClassifier = NaiveBayesClassifier.train(trainSet)
 
-# Analyzes all tweets in the specified files and outputs the file name and its sentiment value.
+# Setting up the connection to zmq server port 5555
+context = zmq.Context()
+socket = context.socket(zmq.REQ)
+socket.connect ("tcp://localhost:5555")
+
+# Wait for the next request from the client and load the message. 
+message = socket.recv()
+rcvd = json.loads(message)
+
+# Analyzes all tweets in the specified directory and sends the data to the zmq server through port 5555. Sends a dictionary value of its type and the corresponding sentiment rating.
+
 for files in os.listdir("."):
-  if (files != '.DS_Store'):
-		
-    #specify the directory for processing.
-    path = ('corpora/tweet_reviews/'+files)
-		
-		load = nltk.data.load(path, format='raw')
-		tokens = word_tokenize(load)
-		features = review_features(tokens)
-		print files,': ',sentimentClassifier.classify(features)
-		
+    if (files != '.DS_Store'):
+        path = ('corpora/movie_reviews/neg/'+files)
+        load = nltk.data.load(path, format='raw')
+        tokens = word_tokenize(load)
+        features = review_features(tokens)
+        
+        t = files, sentimentClassifier.classify(features)
+        data_set = { 'sentiment' : sentimentClassifier.classify(features), 'type':"tweet_push"}
+        message = json.dumps(data_set)
+        
+        pprint.pprint(data_set)
+        socket.send(message)
+        message = socket.recv()
+
+
+
+
