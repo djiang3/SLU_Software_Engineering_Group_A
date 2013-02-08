@@ -66,7 +66,7 @@ if __name__ == "__main__":
       time_open = datetime.combine(time_raw, time(9, 30))
       time_close = datetime.combine(time_raw, time(16,00)) 
       
-      
+      # --------------------------------
       # dataset for market open
       dataset = {'type' : "stock_push", 'symbol' : ticker, 'price' : row[1] , 'timestamp' : time_open.strftime("%Y-%m-%d %H:%M"), 'clientname' : "csv_grab"}
       print "Sending stock ", ticker, " on ", time_open.strftime("%Y-%m-%d %H:%M")
@@ -76,6 +76,7 @@ if __name__ == "__main__":
       message = socket.recv()
       print "received reply [",message,"]"
 
+      # --------------------------------
       # dataset for market close
       dataset = {'type' : 'stock_push', 'symbol' : ticker, 'price' : row[4] , 'timestamp' : time_close.strftime("%Y-%m-%d %H:%M"), 'clientname' : 'csv_grab'}
       print "Sending stock ", ticker, " on ", time_close.strftime("%Y-%m-%d %H:%M")
@@ -85,3 +86,24 @@ if __name__ == "__main__":
       message = socket.recv()
       print "received reply [",message,"]"
 
+      # --------------------------------
+      # dataset for daily high
+      dataset = {'type' : 'stock_push', 'symbol' : ticker, 'price' : row[4] , 'timestamp' : time_raw.strftime("%Y-%m-%d high"), 'clientname' : 'csv_grab'}
+      print "Sending stock ", ticker, " on ", time_raw.strftime("%Y-%m-%d high")
+      message = json.dumps(dataset)
+      socket.send(message)
+
+      message = socket.recv()
+      print "received reply [",message,"]"
+
+      # --------------------------------
+      # dataset for daily low
+      dataset = {'type' : 'stock_push', 'symbol' : ticker, 'price' : row[4] , 'timestamp' : time_raw.strftime("%Y-%m-%d low"), 'clientname' : 'csv_grab'}
+      print "Sending stock ", ticker, " on ", time_raw.strftime("%Y-%m-%d low")
+      message = json.dumps(dataset)
+      socket.send(message)
+
+      message = socket.recv()
+      print "received reply [",message,"]"
+
+  print "done."

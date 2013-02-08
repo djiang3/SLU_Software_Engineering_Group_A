@@ -6,7 +6,7 @@ import pprint
 
 if __name__ == "__main__":
   if len(sys.argv) < 3:
-    print "usage: zmq_stockpull.py TICKER [TICKER TICKER...]"
+    print "usage: zmq_stockpull.py ADDR TICKER [TICKER TICKER...]"
     pprint.pprint(sys.argv)
     exit()
 

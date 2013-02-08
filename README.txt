@@ -28,3 +28,9 @@ to do just that! This program will take a ticker symbol, a start date, and an
 end date, and download the daily stock values for each trading day within
 that range inclusive of the dates given.
 
+
+Database Info
+----------------
+Timestamp information should be stored as a string now. When pulling
+historical stock data, this timestamp should include a date in text format
+"YYYY-MM-DD HH:MM", OR "YYYY-MM-DD high" OR "YYYY-MM-DD low". 
