@@ -25,13 +25,13 @@ while True:
     rcvd = json.loads(message)
 
     #  Do some 'work'
-    time.sleep (1)        #   Do some 'work'
+    #time.sleep (1)        #   Do some 'work'
 
     # interpret the query and run database operation
     if rcvd['type'] == "stock_push":
       # did we receive a raw stock value to store?
       print "stock push request received for %s from %s" % (rcvd['symbol'], rcvd['clientname'])
-      c.execute("INSERT INTO stocks VALUES (NULL, %d, '%s', '%s')" % (rcvd['timestamp'], rcvd['symbol'], rcvd['price']))
+      c.execute("INSERT INTO stocks VALUES (NULL, '%s', '%s', '%s')" % (rcvd['timestamp'], rcvd['symbol'], rcvd['price']))
       sdb.conn.commit()
       print "added %s into database" % rcvd['symbol']
       socket.send("Ack")
