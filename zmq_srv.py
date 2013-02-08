@@ -11,6 +11,7 @@ import json
 import pprint
 
 #connect to zmq
+print("trying to connect")
 context = zmq.Context()
 socket = context.socket(zmq.REP)
 socket.bind("tcp://*:5555")
@@ -19,10 +20,15 @@ socket.bind("tcp://*:5555")
 sdb = getyql.simpledb()
 c = sdb.conn.cursor()
 
+print("Connected")
+
 while True:
-    #  Wait for next request from client
+    #  Wait for next request from clientng 
+    print("waiting for message")
     message = socket.recv()
+    print("Recieved message")
     rcvd = json.loads(message)
+    
 
     #  Do some 'work'
     #time.sleep (1)        #   Do some 'work'
