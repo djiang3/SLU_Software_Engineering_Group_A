@@ -8,6 +8,7 @@ os.chdir("/PATH")
 # Opens the sample text.
 openFile = open('sample_tweet.txt','r')
 
+# Open/create the files for storing data.
 posTweet_sample = open('posTweet_sample.txt','a')
 negTweet_sample = open('negTweet_sample.txt','a')
 trashTweet_sample = open('trashTweet_sample.txt','a')
@@ -61,6 +62,7 @@ if(len(useTrashList) > 0):
 openFile = open('sample_tweet.txt','r+')
 openFile.write(str(dataOut))
 
+# Cleanly close all of the files
 posTweet_sample.close() 
 negTweet_sample.close()
 trashTweet_sample.close()

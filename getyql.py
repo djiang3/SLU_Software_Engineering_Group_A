@@ -29,6 +29,8 @@ class simpledb:
     c = self.conn.cursor()
     c.execute('''CREATE TABLE stocks
                   (id INTEGER PRIMARY KEY, timestamp INTEGER, symbol TEXT, price REAL)''')
+    c.execute('''CREATE TABLE tweets
+                  (id INTEGER PRIMARY KEY, timestamp TEXT, tweet TEXT, sentiment TEXT)''')
     self.conn.commit()
 
   def execute(self, query):

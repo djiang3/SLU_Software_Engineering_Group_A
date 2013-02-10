@@ -26,10 +26,6 @@ c = sdb.conn.cursor()
 
 print("Connected")
 
-while True:
-    #  Wait for next request from clientng 
-    print("waiting for message")
-
 # Have the server run forever.
 while True:
 	

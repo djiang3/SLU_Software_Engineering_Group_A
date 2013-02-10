@@ -35,7 +35,7 @@ tweets = searchTweets(name+"+good&rpp=100")
 # Connect to the zmq server.
 context = zmq.Context()
 socket = context.socket(zmq.REQ)
-socket.connect ("tcp://localhost:5555")
+socket.connect ("tcp://localhost:5556")
 
 #searchTweets(name+"+great&rpp=100")
 #searchTweets(name+"+cool&rpp=100")
@@ -60,7 +60,7 @@ socket.connect ("tcp://localhost:5555")
 # Processes the search query and send the data to the analyzer server, marked as a tweet_push data type.
 
 for tweet in tweets:
-    tweet_data = { 'id':tweet[0], 'text':tweet[1], 'date':tweet[2], 'type':"tweet_push"}
+    tweet_data = {'type': "tweet_send", 'id':tweet[0], 'text':tweet[1], 'date':tweet[2]}
     print "sending tweet id: ", tweet[0]
     message = json.dumps(tweet_data)
     socket.send(message)

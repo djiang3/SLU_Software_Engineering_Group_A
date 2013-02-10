@@ -44,41 +44,45 @@ print "Training on ", len(trainSet), "individual files..."
 
 #The Naive Bayes Classifer, using the trainSet to train.
 sentimentClassifier = NaiveBayesClassifier.train(trainSet)
-
+print "Training complete."
 
 # Connect to the zmq server.
-context = zmq.Context()
-socket = context.socket(zmq.REP)
-socket.bind("tcp://*:5555")
- 
-# Connect to the database.
-#sdb = getyql.simpledb()
-#c = sdb.conn.cursor()
+contextIN = zmq.Context()
+contextOUT = zmq.Context()
+socketIN = contextIN.socket(zmq.REP)
+socketOUT = contextOUT.socket(zmq.REQ)
 
-print "Server is running..."
+socketIN.bind("tcp://*:5556")
+socketOUT.connect("tcp://localhost:5555")
+
 # Have the server run forever.
 while True:
 	
     # Wait for the next request from the client and load the message.
-    message = socket.recv()
-    rcvd = json.loads(message)
+    messageIN = socketIN.recv()
+    rcvd = json.loads(messageIN)
    
     # Handler for tweet_push type.
-    if rcvd['type'] == "tweet_push":
+    if rcvd['type'] == "tweet_send":
         
         tokens = word_tokenize(rcvd['text'])
         features = review_features(tokens)
         print rcvd['text']
-       	print sentimentClassifier.classify(features), "\n"
-        data_set = { 'id':rcvd['id'] , 'date':rcvd['date'], 'sentiment' : sentimentClassifier.classify(features), 'type':"tweet_push"}
-        message = json.dumps(data_set)
+        print sentimentClassifier.classify(features), "\n"
+        data_set = {'type': "tweet_push", 'id':rcvd['id'] , 'date':rcvd['date'], 'sentiment' : sentimentClassifier.classify(features)}
 
-        socket.send("Ack")
-  
+        messageOUT = json.dumps(data_set)
+        pprint.pprint(data_set)
+        socketOUT.send(messageOUT)
+
+        messageOUT = socketOUT.recv()     
+        socketIN.send("Ack")
+
     else:
       # Send reply back to client that the query is unspecified.
       print "received unknown query, ignoring"
-      socket.send("Ack")
+      socketIN.send("Ack")
+      
 
 # Analyzes all tweets in the specified directory and sends the data to the zmq server through port 5555. Sends a dictionary value of its type and the corresponding sentiment rating.
 """
