@@ -11,7 +11,11 @@ import getyql
 import json
 import pprint
 
+
+#connect to zmq
+print("trying to connect")
 # Connect to the zmq server.
+
 context = zmq.Context()
 socket = context.socket(zmq.REP)
 socket.bind("tcp://*:5555")
@@ -20,21 +24,33 @@ socket.bind("tcp://*:5555")
 sdb = getyql.simpledb()
 c = sdb.conn.cursor()
 
+print("Connected")
+
+while True:
+    #  Wait for next request from clientng 
+    print("waiting for message")
+
 # Have the server run forever.
 while True:
 	
     # Wait for the next request from the client and load the message.
-    message = socket.recv()
-    rcvd = json.loads(message)
 
+    message = socket.recv()
+    print("Recieved message")
+    rcvd = json.loads(message)
+    
+    #  Do some 'work'
+    #time.sleep (1)        #   Do some 'work'
+
+    # interpret the query and run database operation
     # Interpret the query based on its type value. The run the database operation accordingly.
     if rcvd['type'] == "stock_push":
       # did we receive a raw stock value to store?
-      print "stock push request received for %s from %s" % (rcvd['symbol'], rcvd['clientname'])
-      c.execute("INSERT INTO stocks VALUES (NULL, %d, '%s', '%s')" % (rcvd['timestamp'], rcvd['symbol'], rcvd['price']))
-      sdb.conn.commit()
-      print "added %s into database" % rcvd['symbol']
-      socket.send("Ack")
+	print "stock push request received for %s from %s" % (rcvd['symbol'], rcvd['clientname'])
+	c.execute("INSERT INTO stocks VALUES (NULL, '%s', '%s', '%s')" % (rcvd['timestamp'], rcvd['symbol'], rcvd['price']))
+	sdb.conn.commit()
+	print "added %s into database" % rcvd['symbol']
+	socket.send("Ack")
 
 	# Handler for stock_pull type.
     elif rcvd['type'] == "stock_pull":

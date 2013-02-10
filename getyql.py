@@ -71,7 +71,7 @@ if __name__ == "__main__":
   # would be nice to have something with hour-by-hour at least?
   # our object
   y = getyql()
-  
+  """
   # demonstrate historical download
   d1 = datetime.date(2012,1,1)
   d2 = datetime.date(2012,6,1)
@@ -92,12 +92,13 @@ if __name__ == "__main__":
   print "done in %f cpu seconds" % t1
   t2 = time.clock() - t0
   print "shown in %f cpu seconds" % t0
-
+  """
   print
   print "now trying the database"
   sdb = simpledb()
   try:
     sdb.newdb()
+    print "new database created" 
   except sqlite3.OperationalError:
     print "caught trying to make a new database; excepting"
 

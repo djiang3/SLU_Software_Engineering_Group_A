@@ -13,4 +13,41 @@ classifier to sort useful and trash tweets.			Darrel		Pending
 
 Construct a program to enable faster tweet labeling		Darrel		Complete
 
-                							
+<<<<<<< HEAD
+Construct TweetCache object for retrieving/updating           	Aaron		Pending
+tweets
+
+Create daemon script for TweetCache				Aaron		Pending
+
+
+Pull live stocks and send to database                 Steve     Pending
+
+Pull historical stocks and send to database           Steve     Pending
+
+Stock_push db network request                     Devon,Steve   Pending
+
+Stock_pull db network request                     Devon,Steve   Pending
+
+Tweet_push db network request                     Devon,Aaron   Pending
+
+Tweet_pull db network request                     Devon,Aaron   Pending
+
+Tweet_context_push db network request             Devon,Darrel  Pending
+
+Tweet_context_pull db network request             Devon,Darrel  Pending
+
+Prevent sending duplicate stocks from stock_push      Steve     Pending
+
+Recognize if market is currently in session           Steve     Pending
+
+Display graph of pulled stock data                    Di        Pending
+
+Find maxima of given 2d data set                      Di        Pending
+
+Find minima of given 2d data set                      Di        Pending
+
+Find critical points of given 2d data set             Di        Pending
+
+Mining tweets                                         Aaron     Pending
+
+Improve twitter API link                              Aaron     Pending
