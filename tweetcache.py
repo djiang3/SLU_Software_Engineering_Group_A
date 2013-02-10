@@ -1,37 +1,43 @@
 import twitter
 import time
 import sys
-import simplejson
+import json
+import sqlite3
+import zmq
+import os
+import urllib
+
 
 #string constants
-ID_INDEX='ids'
-RESET_TIME='reset_time_in_seconds'
-REMAINING_HITS='remaining_hits'
+S_ID='id_str'
+S_RESULTS='results'
+S_TWEET_QUERY = "http://search.twitter.com/search.json?q="
+S_RESULTS_PER_PAGE="&rpp=100"
+S_SINCE_ID="&since_id="
 
-#numerical constants
-DEFAULT_PAGES=10
-DEFAULT_PAGE_LENGTH=100
+#numeric constants
+N_RESULTS_PER_PAGE=100
+
 
 class WeightedTweet:
-	def __init__(self, tweet, company, weight=1, isFriend=False):
+	def __init__(self, tweet, company, weight=1):
 		self.tweet = tweet
 		self.weight = weight
 		self.company = company
-		self.isFriend = isFriend
 		
 	def asDict(self):
-		tweetDict = self.tweet.AsDict()
-		tweetDict['weight'] = self.weight
-		tweetDict['isFriend'] = self.isFriend
-		tweetDict['company'] = self.company
-		return tweetDict
+		tempDict = dict()
+		tempDict['weight'] = self.weight
+		tempDict['company'] = self.company
+		fullDict = dict(self.tweet.items() + tempDict.items())
+		return fullDict
+
 
 
 class TweetCache:
-	def __init__(self, api, companies, useFriends=False, sinceID=None, positiveTerms=None, negativeTerms=None, financialTerms=None):
+	def __init__(self, api, companies, sinceID="0", positiveTerms=None, negativeTerms=None, financialTerms=None):
 		self.api = api
 		self.companies = companies
-		self.useFriends = useFriends
 		self.sinceID = sinceID
 		self.positiveTerms = positiveTerms
 		self.negativeTerms = negativeTerms
@@ -40,7 +46,6 @@ class TweetCache:
 		self.resetTime = 0
 		self.remainingHits = 0
 		self.weightedTweets = []
-		self.friendTweets = []
 
 		self.initializeCache()
 
@@ -49,106 +54,69 @@ class TweetCache:
 
 		#set creation time
 		self.creationTime = time.time()
-		
-		#set remaining hits and time
-		self.updateRateLimitInfo()
-		
+				
 		print '...Performing initial fill...'
 		self.updateCache()
 
 
 	def updateCache(self):
-		if(self.useFriends):
-			print '...Adding friend timelines...'
-                        friends = self.api.GetFriends()
-			friendTimeline = []
-
-                        for id in range(len(friends)):
-				#does not affect remainingHits
-				friendTimeLine = self.api.GetFriendsTimeline(user=friends[id].id, since_id=self.sinceID)
-                                self.updateRateLimitInfo()
-				
-				for ftw in friendTimeline:
-					self.friendTweets.append(WeightedTweet(ftw, friends[id].screen_name, weight=2, isFriend=True))
 
                 #get tweets relating to companies
 		print '...Adding tweets from search...'
 
-		positiveTweets = dict()
-		positiveTweets['tweets'] = []
-		positiveTweets['companies'] = []
-		negativeTweets = dict()
-		negativeTweets['tweets'] = []
-		negativeTweets['companies'] = []
-		financialTweets = dict()
-		financialTweets['tweets'] = []
-		financialTweets['companies'] = []
+		positiveTweets = []
+		negativeTweets = []
+		financialTweets = []
 
                 for c in self.companies:
 			if(self.positiveTerms):
+				#not O(n^3) because of limited search terms
+				#can be improved if needed
 				for i in self.positiveTerms:
-					searchTerm = c + ' ' + i
-                               		positiveTweets['tweets'].append(self.api.GetSearch(term=searchTerm, since_id=self.sinceID, per_page=DEFAULT_PAGE_LENGTH))
-					positiveTweets['companies'].append(c)
-                               		self.updateRateLimitInfo()
-				#positiveTweets['companies'].append(c)
+					query = self.generateQuery(c,i)
+                               		positiveSearch = urllib.urlopen(query)
+					positiveTweets = json.loads(positiveSearch.read())
+					for pt in positiveTweets[S_RESULTS]:
+						self.weightedTweets.append(WeightedTweet(pt, c))
+	
 			if(self.negativeTerms):
 				for i in self.negativeTerms:
-					searchTerm = c + ' ' + i
-                               		negativeTweets['tweets'].append(self.api.GetSearch(term=searchTerm, since_id=self.sinceID, per_page=DEFAULT_PAGE_LENGTH))
-					negativeTweets['companies'].append(c)
-                               		self.updateRateLimitInfo()
-				#negativeTweets['companies'].append(c)
+					query = self.generateQuery(c,i)
+					negativeSearch = urllib.urlopen(query)
+					negativeTweets = json.loads(negativeSearch.read())
+					for nt in negativeTweets[S_RESULTS]:
+						self.weightedTweets.append(WeightedTweet(nt, c))
+
 			if(self.financialTerms):
 				for i in self.financialTerms:
-					searchTerm = c + ' ' + i
-                               		financialTweets['tweets'].append(self.api.GetSearch(term=searchTerm, since_id=self.sinceID, per_page=DEFAULT_PAGE_LENGTH))
-					financialTweets['companies'].append(c)
-                               		self.updateRateLimitInfo()
-				#financialTweets['companies'].append(c)
-
-#		print len(positiveTweets['companies'])
-#		print len(positiveTweets['tweets'])
-#		sys.exit(1)
-
-
-		for i in range(len(positiveTweets['companies'])):
-			for j in range(len(positiveTweets['tweets'][i-1])):
-				self.weightedTweets.append(WeightedTweet(positiveTweets['tweets'][i-i][j-1], positiveTweets['companies'][i-1]))
-		for i in range(len(negativeTweets['companies'])):
-			for j in range(len(negativeTweets['tweets'][i-1])):
-				self.weightedTweets.append(WeightedTweet(negativeTweets['tweets'][i-i][j-1], negativeTweets['companies'][i-1]))
-		for i in range(len(financialTweets['companies'])):
-			for j in range(len(financial['tweets'][i-1])):
-				self.weightedTweets.append(WeightedTweet(financialTweets['tweets'][i-1][j-1], financialTweets['companies'][i-1]))
+					query = self.generateQuery(c,i)
+					financialSearch = urllib.urlopen(query)
+					financialTweets = json.loads(financialSearch.read())
+					for ft in financialTweets[S_RESULTS]:
+						self.weightedTweets.append(WeightedTweet(ft, c))
 
                 #update sinceID to latest tweet
-                self.sinceID = self.weightedTweets[len(self.weightedTweets)-1].tweet.id
+		print self.sinceID
+                self.sinceID = self.weightedTweets[len(self.weightedTweets)-1].asDict()[S_ID]
+		print self.sinceID
 
-	#trouble getting correct rate limit info
-	def updateRateLimitInfo(self):
-		rateLimitStatus = self.api.GetRateLimitStatus()
-		self.resetTime = rateLimitStatus[RESET_TIME]
-		self.remainingHits = rateLimitStatus[REMAINING_HITS]
-
-	def getSearchTweets(self):
-		return self.weightedTweets
-
-	def getFriendTweets(self):
-		return self.friendTweets
 
 	def getTweetsAsDicts(self):
-		fullTweetDict = []
+		allTweets = []
 		for wt in self.weightedTweets:
-			fullTweetDict.append(wt.asDict())
-		if(self.useFriends):
-			for ft in self.friendTweets:
-				fullTweetDict.append(ft.asDict())
-		return fullTweetDict
+			allTweets.append(wt.asDict())
+		return allTweets
+			
 
 	def getCreationTime(self):
 		return self.creationTime
 
 	def getSinceID(self):
 		return self.sinceID
+
+	def generateQuery(self, c, t):
+		return S_TWEET_QUERY+c+'+'+t+S_RESULTS_PER_PAGE+S_SINCE_ID+self.sinceID
+
+	def getTweetCount(self):
+		return len(self.getTweetsAsDicts())
 

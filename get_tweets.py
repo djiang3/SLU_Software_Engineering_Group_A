@@ -9,7 +9,7 @@ import urllib2
 
 def checkNetworkConnection():
 	try:
-		connect = urllib2.urlopen('http://www.google.com/')
+		connect = urllib2.urlopen('http://www.google.com/', timeout=1)
 		return True
 	except urllib2.URLError as ue:
 		return False
@@ -66,19 +66,24 @@ def main():
 	print 'initializing api...'
 	api = initializeAPI(keys)
 
-	positiveTerms = {'good', 'great', 'awesome', 'cool', 'love'}
+	positiveTerms = {'great', 'awesome', 'cool', 'love', 'happy', 'nice', 'thank'}
+	negativeTerms = {'bad', 'awful', 'terrible', 'suck', 'unhappy', 'poor', 'hate'}
+	financialTerms = {'business', 'money', 'finance'}
 
 	print 'initializing tweet cache...'
 
 	try:
-		cache = tweetcache.TweetCache(api, companies, positiveTerms=positiveTerms)
+		cache = tweetcache.TweetCache(api, companies, positiveTerms=positiveTerms, negativeTerms=negativeTerms, financialTerms=financialTerms)
 	except twitter.TwitterError:
 		print "Could not authenticate API. Make sure all authentication keys are correct"
 		sys.exit(1)
 
-	allCacheTweetDict = cache.getTweetsAsDicts()
-	for dict in allCacheTweetDict:
-		print dict['text'].encode(encoding='UTF-8')
+	allCacheTweets = cache.getTweetsAsDicts()
+	print cache.getTweetCount()
+	time.sleep(300)
+	cache.updateCache()
+	print cache.getTweetCount()
+	
 
 	#TODO send to analyzer
 
