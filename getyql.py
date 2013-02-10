@@ -105,7 +105,7 @@ if __name__ == "__main__":
     print "caught trying to make a new database; excepting"
 
   c = sdb.conn.cursor()
-  c.execute("INSERT INTO stocks VALUES (NULL, %d, '%s', '%s')" % (timestamp, result[0]["symbol"], result[0]["AskRealtime"]))
+#  c.execute("INSERT INTO stocks VALUES (NULL, %d, '%s', '%s')" % (timestamp, result[0]["symbol"], result[0]["AskRealtime"]))
   sdb.conn.commit()
   
   for row in c.execute("SELECT * FROM stocks"):
