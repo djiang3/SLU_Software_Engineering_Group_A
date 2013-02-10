@@ -50,7 +50,7 @@ print "Training complete."
 contextIN = zmq.Context()
 contextOUT = zmq.Context()
 socketIN = contextIN.socket(zmq.REP)
-socketOUT = contextOUT.socket(zmq.REP)
+socketOUT = contextOUT.socket(zmq.REQ)
 
 socketIN.bind("tcp://*:5556")
 socketOUT.connect("tcp://localhost:5555")
