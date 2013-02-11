@@ -26,11 +26,18 @@ class simpledb:
     self.conn = sqlite3.connect("sample.db")
 
   def newdb(self):
+    # Instantiate the database
     c = self.conn.cursor()
     c.execute('''CREATE TABLE stocks
-                  (id INTEGER PRIMARY KEY, timestamp INTEGER, symbol TEXT, price REAL)''')
+                  (id INTEGER PRIMARY KEY, timestamp TEXT, symbol TEXT, price REAL)''')
     c.execute('''CREATE TABLE tweets
                   (id INTEGER PRIMARY KEY, timestamp TEXT, tweet TEXT, sentiment TEXT)''')
+    c.execute('''CREATE TABLE sentiments
+                  (tweetID INTEGER PRIMARY KEY, dateRange TEXT, keyword TEXT, dataType TEXT, timestamp TEXT)''')
+    c.execute('''CREATE TABLE trendMap
+                  (trendID INTEGER, tweetID INTEGER)''')
+    c.execute('''CREATE TABLE subTrendMap
+                  (trendID INTEGER, subTrendID INTEGER)''')
     self.conn.commit()
 
   def execute(self, query):
