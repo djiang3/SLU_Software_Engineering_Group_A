@@ -8,8 +8,9 @@ import urllib2
 
 
 def checkNetworkConnection():
+	print "Connecting to network..."
 	try:
-		connect = urllib2.urlopen('http://www.google.com/')
+		connect = urllib2.urlopen('http://www.google.com/', timeout=1)
 		return True
 	except urllib2.URLError as ue:
 		return False
@@ -66,20 +67,28 @@ def main():
 	print 'initializing api...'
 	api = initializeAPI(keys)
 
-	positiveTerms = {'good', 'great', 'awesome', 'cool', 'love'}
+	positiveTerms = {'great', 'awesome', 'cool', 'love', 'happy', 'nice', 'thank'}
+	negativeTerms = {'bad', 'awful', 'terrible', 'suck', 'unhappy', 'poor', 'hate'}
+	financialTerms = {'business', 'money', 'finance'}
 
 	print 'initializing tweet cache...'
 
 	try:
-		cache = tweetcache.TweetCache(api, companies, useFriends=True, positiveTerms=positiveTerms)
+		cache = tweetcache.TweetCache(api, companies, positiveTerms=positiveTerms, negativeTerms=negativeTerms, financialTerms=financialTerms)
 	except twitter.TwitterError:
 		print "Could not authenticate API. Make sure all authentication keys are correct"
 		sys.exit(1)
+	
+	while(1):
+		if(checkNetworkConnection() == True):
+			cache.updateCache()
+			print "Number of Tweets in Cache: {0}".format(cache.getTweetCount())
+			print cache.getTweets()[cache.getTweetCount()-1].getTweetText()
+		time.sleep(30)
 
-	allCacheTweets = cache.getCompanyTweets()
-
-	#TODO add analyzer
+	#TODO send to analyzer
 
 
 if __name__ == '__main__':
+
 	main()
