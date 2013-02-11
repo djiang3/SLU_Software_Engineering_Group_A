@@ -13,12 +13,16 @@ classifier to sort useful and trash tweets.			Darrel		Pending
 
 Construct a program to enable faster tweet labeling		Darrel		Complete
 
-<<<<<<< HEAD
 Construct TweetCache object for retrieving/updating           	Aaron		Pending
 tweets
+		- optimize search (possible)
+
+Create WeightedTweet object for robust tweet access		Aaron		Pending
+		- add getDate function
+		- add getDateInSeconds function
 
 Create daemon script for TweetCache				Aaron		Pending
-
+		- add forking
 
 Pull live stocks and send to database                 Steve     Pending
 
