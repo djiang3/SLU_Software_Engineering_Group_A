@@ -51,6 +51,7 @@ if __name__ == "__main__":
   out = cStringIO.StringIO(out)
 
   sheet = csv.reader(out)
+
   for row in sheet:
     # generate two stock push queries from each row:
     #   open, close, mid-day
@@ -65,7 +66,21 @@ if __name__ == "__main__":
       time_raw = datetime.strptime(row[0], "%Y-%m-%d").date()
       time_open = datetime.combine(time_raw, time(9, 30))
       time_close = datetime.combine(time_raw, time(16,00)) 
-      
+
+      stk_avg = (float(row[3]) + float(row[4]))/2
+      stk_avg = "%.2f" % stk_avg
+      print "high: %s\tlow: %s\tavg: %s" % (row[3], row[4], stk_avg)
+
+      # --------------------------------
+      # dataset for daily average
+      dataset = {'type' : 'stock_push', 'symbol' : ticker, 'price' : stk_avg , 'timestamp' : time_raw.strftime("%Y-%m-%d avg"), 'clientname' : 'csv_grab'}
+      print "Sending stock ", ticker, " on ", time_raw.strftime("%Y-%m-%d avg")
+      message = json.dumps(dataset)
+      socket.send(message)
+
+      message = socket.recv()
+      print "received reply [",message,"]"
+
       # --------------------------------
       # dataset for market open
       dataset = {'type' : "stock_push", 'symbol' : ticker, 'price' : row[1] , 'timestamp' : time_open.strftime("%Y-%m-%d %H:%M"), 'clientname' : "csv_grab"}
