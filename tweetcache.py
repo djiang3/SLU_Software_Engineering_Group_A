@@ -23,6 +23,7 @@ class WeightedTweet:
 		self.tweet = tweet
 		self.weight = weight
 		self.company = company
+		self.type = 'tweet_send'
 
 	def __eq__(self, other):
 		return self.getTweetText() == other.getTweetText()
@@ -31,6 +32,7 @@ class WeightedTweet:
 		tempDict = dict()
 		tempDict['weight'] = self.weight
 		tempDict['company'] = self.company
+		tempDict['type'] = self.type
 		fullDict = dict(self.tweet.items() + tempDict.items())
 		return fullDict
 
@@ -95,6 +97,8 @@ class TweetCache:
 
                 #get tweets relating to companies
 		print '...Adding tweets from search...'
+
+		self.weightedTweets=[]
 
 		positiveTweets = []
 		negativeTweets = []

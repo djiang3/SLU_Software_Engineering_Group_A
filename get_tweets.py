@@ -5,7 +5,7 @@ import sys
 import tweetcache
 import json
 import urllib2
-
+import zmq
 
 def checkNetworkConnection():
 	print "Connecting to network..."
@@ -49,6 +49,10 @@ def initializeAPI(keys):
 
 def main():
 
+	context = zmq.Context()
+	socket = context.socket(zmq.REQ)
+	socket.connect ("tcp://localhost:5556")
+
 	if(len(sys.argv) < 2):
 		print 'usage: get_tweets.py COMPANY [COMPANY COMPANY...]'
 		sys.exit(1)
@@ -84,8 +88,16 @@ def main():
 			cache.updateCache()
 			print "Number of Tweets in Cache: {0}".format(cache.getTweetCount())
 			print cache.getTweets()[cache.getTweetCount()-1].getTweetText()
-		time.sleep(30)
 
+			print "Sending tweet dictionary..."
+			tweet_dict = cache.getTweetsAsDicts()
+			message = json.dumps(tweet_dict)
+			socket.send(message)
+			message = socket.recv()
+			print "Sent!"
+			
+		time.sleep(1)
+		
 	#TODO send to analyzer
 
 

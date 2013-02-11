@@ -61,28 +61,38 @@ while True:
     # Wait for the next request from the client and load the message.
     messageIN = socketIN.recv()
     rcvd = json.loads(messageIN)
-   
+    print len(rcvd)
     # Handler for tweet_push type.
-    if rcvd['type'] == "tweet_send":
+
+    for tweet in rcvd:
+        if tweet['type'] == "tweet_send":
+            tweets = list()
+            
+            temp_tweet = tweet["id"], tweet["text"], tweet["created_at"]
+            tweets.append(temp_tweet)
+                
+#            for twee in tweets: 
+ #               tweet_data = {'type': "tweet_send", 'id':tweet[0], 'text':tweet[1], 'date':tweet[2]}
+            
         
-        tokens = word_tokenize(rcvd['text'])
-        features = review_features(tokens)
-        print rcvd['text']
-        print sentimentClassifier.classify(features), "\n"
-        data_set = {'type': "tweet_push", 'id':rcvd['id'] , 'date':rcvd['date'], 'sentiment' : sentimentClassifier.classify(features)}
+            tokens = word_tokenize(tweet["text"])
+            features = review_features(tokens)
+            print tweet["text"]
+            print sentimentClassifier.classify(features), "\n"
+            data_set = {'type': "tweet_push", 'id':tweet["id"] , 'date':tweet["created_at"], 'sentiment' : sentimentClassifier.classify(features)}
 
-        messageOUT = json.dumps(data_set)
-        pprint.pprint(data_set)
-        socketOUT.send(messageOUT)
+            messageOUT = json.dumps(data_set)
+            pprint.pprint(data_set)
+            socketOUT.send(messageOUT)
 
-        messageOUT = socketOUT.recv()     
-        socketIN.send("Ack")
+            messageOUT = socketOUT.recv()     
+   
 
-    else:
-      # Send reply back to client that the query is unspecified.
-      print "received unknown query, ignoring"
-      socketIN.send("Ack")
-      
+        else:
+            # Send reply back to client that the query is unspecified.
+            print "received unknown query, ignoring"
+            socketIN.send("Ack")
+    socketIN.send("Ack")
 
 # Analyzes all tweets in the specified directory and sends the data to the zmq server through port 5555. Sends a dictionary value of its type and the corresponding sentiment rating.
 """
