@@ -2,10 +2,9 @@ import twitter
 import time
 import sys
 import json
-import sqlite3
-import zmq
 import os
 import urllib
+import datetime
 
 
 #string constants
@@ -24,6 +23,9 @@ class WeightedTweet:
 		self.tweet = tweet
 		self.weight = weight
 		self.company = company
+
+	def __eq__(self, other):
+		return self.getTweetText() == other.getTweetText()
 		
 	def asDict(self):
 		tempDict = dict()
@@ -32,6 +34,32 @@ class WeightedTweet:
 		fullDict = dict(self.tweet.items() + tempDict.items())
 		return fullDict
 
+
+	def getTweetText(self):
+		return self.tweet['text']
+
+	#returns ID as string
+	def getTweetID(self):
+		return self.tweet['id_str']
+
+	def getTweetUsername(self):
+		return self.tweet['from_user']
+
+	def getTweetUserID(self):
+		return self.tweet['from_user_id_str']
+
+	#returns date of tweet as datetime instance
+	def getTweetDate(self):
+		months = {'Jan':1, 'Feb':2, 'Mar':3, 'Apr':4, 'May':5, 'Jun':6, 'Jul':7, 'Aug':8, 'Sept':9, 'Oct':10, 'Nov':11, 'Dec':12}
+		tDate = self.tweet['created_at']
+		return "hello"
+
+	def getTweetRecipient(self):
+		return self.tweet['to_user_id_str']
+
+
+	
+	
 
 
 class TweetCache:
@@ -54,6 +82,10 @@ class TweetCache:
 
 		#set creation time
 		self.creationTime = time.time()
+
+		if(isinstance(self.sinceID, str) == False):
+			print "sinceID must be a string"
+			sys.exit(1)
 				
 		print '...Performing initial fill...'
 		self.updateCache()
@@ -96,16 +128,26 @@ class TweetCache:
 						self.weightedTweets.append(WeightedTweet(ft, c))
 
                 #update sinceID to latest tweet
-		print self.sinceID
-                self.sinceID = self.weightedTweets[len(self.weightedTweets)-1].asDict()[S_ID]
-		print self.sinceID
+		print "From: {0}".format(self.sinceID)
+		if(len(self.weightedTweets) > 0):
+                	self.sinceID = self.weightedTweets[len(self.weightedTweets)-1].asDict()[S_ID]
+		print "To: {0}".format(self.sinceID)
 
 
 	def getTweetsAsDicts(self):
-		allTweets = []
-		for wt in self.weightedTweets:
-			allTweets.append(wt.asDict())
-		return allTweets
+		if(len(self.weightedTweets) > 0):
+			allTweetDict = []
+			for wt in self.weightedTweets:
+				allTweetDict.append(wt.asDict())
+			return allTweetDict
+		else:
+			print "No tweets in cache"
+
+	def getTweets(self):
+		if(len(self.weightedTweets) > 0):
+			return self.weightedTweets
+		else:
+			print "No tweets in cache"
 			
 
 	def getCreationTime(self):
@@ -118,5 +160,8 @@ class TweetCache:
 		return S_TWEET_QUERY+c+'+'+t+S_RESULTS_PER_PAGE+S_SINCE_ID+self.sinceID
 
 	def getTweetCount(self):
-		return len(self.getTweetsAsDicts())
+		return len(self.weightedTweets)
+
+	def clearCache(self):
+		self.weightedTweets = []
 

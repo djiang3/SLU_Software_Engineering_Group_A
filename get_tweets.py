@@ -8,6 +8,7 @@ import urllib2
 
 
 def checkNetworkConnection():
+	print "Connecting to network..."
 	try:
 		connect = urllib2.urlopen('http://www.google.com/', timeout=1)
 		return True
@@ -77,16 +78,17 @@ def main():
 	except twitter.TwitterError:
 		print "Could not authenticate API. Make sure all authentication keys are correct"
 		sys.exit(1)
-
-	allCacheTweets = cache.getTweetsAsDicts()
-	print cache.getTweetCount()
-	time.sleep(300)
-	cache.updateCache()
-	print cache.getTweetCount()
 	
+	while(1):
+		if(checkNetworkConnection() == True):
+			cache.updateCache()
+			print "Number of Tweets in Cache: {0}".format(cache.getTweetCount())
+			print cache.getTweets()[cache.getTweetCount()-1].getTweetText()
+		time.sleep(30)
 
 	#TODO send to analyzer
 
 
 if __name__ == '__main__':
+
 	main()
