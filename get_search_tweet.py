@@ -23,10 +23,14 @@ def searchTweets(query):
  search = urllib.urlopen("http://search.twitter.com/search.json?q="+query)
  dict = json.loads(search.read())
  #print dict["results"]
+ return dict
+"""
  for result in dict["results"]: # result is a list of dictionaries
      tweet = result["id"],result["text"], result["created_at"]
      temp_list.append(tweet)
  return temp_list
+ """
+
 
 name = "bestbuy"
 tweet_dict = dict()
@@ -59,9 +63,12 @@ socket.connect ("tcp://localhost:5556")
 #searchTweets(name+"+finance&rpp=100")
 # Processes the search query and send the data to the analyzer server, marked as a tweet_push data type.
 
-for tweet in tweets:
-    tweet_data = {'type': "tweet_send", 'id':tweet[0], 'text':tweet[1], 'date':tweet[2]}
-    print "sending tweet id: ", tweet[0]
-    message = json.dumps(tweet_data)
-    socket.send(message)
-    message = socket.recv()
+#for tweet in tweets:
+ #   tweet_data = {'type': "tweet_send", 'id':tweet[0], 'text':tweet[1], 'date':tweet[2]}
+  #  print "sending tweet id: ", tweet[0]
+
+
+#message = json.dumps(tweet_data)
+message = json.dumps(tweets)
+socket.send(message)
+message = socket.recv()
