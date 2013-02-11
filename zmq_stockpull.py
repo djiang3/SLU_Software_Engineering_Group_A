@@ -3,10 +3,13 @@ import json
 import zmq
 import sys
 import pprint
+import numpy as np
+import string as st
 
 if __name__ == "__main__":
   if len(sys.argv) < 3:
     print "usage: zmq_stockpull.py ADDR TICKER [TICKER TICKER...]"
+
     pprint.pprint(sys.argv)
     exit()
 
@@ -40,5 +43,26 @@ if __name__ == "__main__":
     print "Received reply for ticker ", stock
 
     # print retreived stocks
-    rcvd = json.loads(message)
-    pprint.pprint(rcvd)
+    rcvd = json.loads(message)    
+    #pprint.pprint(rcvd)
+
+    arr = np.array([0,0,0,0])
+
+    for row in rcvd:
+      if st.find(row[1], "avg")>0:
+        pass
+        #print "ignoring average value"
+        #arr = np.vstack((arr, [row[0], row[1], row[2], row[3]]))
+      else:
+        arr = np.vstack((arr, [row[0], row[1], row[2], row[3]]))
+      """
+      if st.find(row[1], "high")>0:
+        print "ignoring high value"
+      elif st.find(row[1], "low")>0:
+        print "ignoring low value"
+      else:
+        arr = np.vstack((arr, [row[0], row[1], row[2], row[3]]))
+      """
+    print arr[-30:]
+
+
