@@ -64,6 +64,15 @@ while True:
         sdb.conn.commit()
         print "added %s into database" % rcvd['sentiment']
         socket.send("Ack")
+        
+    # Handler for tweet_pull type, for tweet_trender.
+    elif rcvd['type'] == "tweet_pull":
+        print "recieved query for %s over the date range of %s" % (rcvd['keyword'], rcvd['date_range'])
+        pulled_tweets = []
+        for row in c.execute("SELECT * FROM stocks WHERE timestamp = '%s'" % (rcvd['date_range'])):
+            pulled_tweets.append(row)
+        message = json.dumps(pulled_tweets)
+        socket.send(message)
   
     else:
       # Send reply back to client that the query is unspecified.
