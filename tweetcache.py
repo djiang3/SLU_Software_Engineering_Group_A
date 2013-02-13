@@ -52,7 +52,17 @@ class WeightedTweet:
 	def getTweetDate(self):
 		months = {'Jan':1, 'Feb':2, 'Mar':3, 'Apr':4, 'May':5, 'Jun':6, 'Jul':7, 'Aug':8, 'Sept':9, 'Oct':10, 'Nov':11, 'Dec':12}
 		tDate = self.tweet['created_at']
-		return "hello"
+		tParsed = tDate.split(" ")
+		sParsed = tParsed[4].split(":")
+		seconds = tParsed[2][:-1]
+
+		print map(int, tParsed)
+		
+		#time = datetime.datetime((int)tParsed[3], months[tParsed[2]], (int)tParsed[1], (int)sParsed[0], (int)sParsed[1], 0)
+		#return time
+		
+		return 0
+
 
 	def getTweetRecipient(self):
 		return self.tweet['to_user_id_str']

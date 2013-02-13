@@ -78,14 +78,17 @@ def main():
 	except twitter.TwitterError:
 		print "Could not authenticate API. Make sure all authentication keys are correct"
 		sys.exit(1)
-	
+
+	print cache.getTweets()[0].getTweetDate()
+
+	"""
 	while(1):
 		if(checkNetworkConnection() == True):
 			cache.updateCache()
 			print "Number of Tweets in Cache: {0}".format(cache.getTweetCount())
 			print cache.getTweets()[cache.getTweetCount()-1].getTweetText()
 		time.sleep(30)
-
+	"""
 	#TODO send to analyzer
 
 
