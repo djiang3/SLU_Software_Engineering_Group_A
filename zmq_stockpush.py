@@ -8,22 +8,23 @@ import pprint
 
 if __name__ == "__main__":
   if len(sys.argv) < 2:
-    print "usage: zmq_stockpush.py TICKER [TICKER TICKER...]"
+    print "usage: zmq_stockpush.py ADDR TICKER [TICKER TICKER...]"
 
   pprint.pprint(sys.argv)
 
   tickers = []
 
-  for itr in range( len(sys.argv)-1 ):
-    tickers.append(sys.argv[itr+1])
+  for itr in range( len(sys.argv)-2 ):
+    tickers.append(sys.argv[itr+2])
 
   # connect to zmq
-  print "connecting to server..."
   y = getyql.getyql()
   context = zmq.Context()
 
   socket = context.socket(zmq.REQ)
-  socket.connect ("tcp://localhost:5555")
+  addr = ("tcp://%s:5555" % sys.argv[1])
+  print "connecting to server %s" % addr
+  socket.connect (addr)
 
   for request in range (10):
     for stock in tickers:
