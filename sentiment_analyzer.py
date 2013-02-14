@@ -23,8 +23,8 @@ import getyql
 
 
 # Foundation code to incorporate our unique set of corpora, used to train the Naive Bayes Classifier on usefulness of a tweet and the sentiment of the tweet. This code will not be used until we begin to create are own data set for the trainer."""
-os.chdir("/Users/DJiang/nltk_data/corpora/movie_reviews/neg")
-tweet_review = nltk.corpus.reader.CategorizedPlaintextCorpusReader('.','.*\.txt', cat_pattern='(\w+)/*')
+#os.chdir("/Users/DJiang/nltk_data/corpora/movie_reviews/neg")
+#tweet_review = nltk.corpus.reader.CategorizedPlaintextCorpusReader('.','.*\.txt', cat_pattern='(\w+)/*')
 
 # Feature set function that builds a dictionary from the reviews, with a value of either positive or negative, followed by the corresponding tweet.
 def review_features(review):

@@ -52,16 +52,19 @@ class WeightedTweet:
 
 	#returns date of tweet as datetime instance
 	def getTweetDate(self):
-		months = {'Jan':1, 'Feb':2, 'Mar':3, 'Apr':4, 'May':5, 'Jun':6, 'Jul':7, 'Aug':8, 'Sept':9, 'Oct':10, 'Nov':11, 'Dec':12}
-		tDate = self.tweet['created_at']
-		return "hello"
+		return self.tweet['created_at']
+
 
 	def getTweetRecipient(self):
 		return self.tweet['to_user_id_str']
 
 
 	
+class TweetCacheError(Exception):
 	
+	@property
+	def message(self):
+		return self.args[0]
 
 
 class TweetCache:
@@ -86,18 +89,15 @@ class TweetCache:
 		self.creationTime = time.time()
 
 		if(isinstance(self.sinceID, str) == False):
-			print "sinceID must be a string"
+			raise TweetCacheError("SinceID must be a string")
 			sys.exit(1)
 				
-		print '...Performing initial fill...'
 		self.updateCache()
 
 
 	def updateCache(self):
 
                 #get tweets relating to companies
-		print '...Adding tweets from search...'
-
 		self.weightedTweets=[]
 
 		positiveTweets = []
@@ -112,30 +112,33 @@ class TweetCache:
 					query = self.generateQuery(c,i)
                                		positiveSearch = urllib.urlopen(query)
 					positiveTweets = json.loads(positiveSearch.read())
-					for pt in positiveTweets[S_RESULTS]:
-						self.weightedTweets.append(WeightedTweet(pt, c))
+					if(positiveTweets[S_RESULTS]):
+						for pt in positiveTweets[S_RESULTS]:
+							self.weightedTweets.append(WeightedTweet(pt, c))
+					#else:
+					#	raise TweetCacheError("End of positive tweets")
 	
 			if(self.negativeTerms):
 				for i in self.negativeTerms:
 					query = self.generateQuery(c,i)
 					negativeSearch = urllib.urlopen(query)
 					negativeTweets = json.loads(negativeSearch.read())
-					for nt in negativeTweets[S_RESULTS]:
-						self.weightedTweets.append(WeightedTweet(nt, c))
+					if(negativeTweets[S_RESULTS]):
+						for nt in negativeTweets[S_RESULTS]:
+							self.weightedTweets.append(WeightedTweet(nt, c))
 
 			if(self.financialTerms):
 				for i in self.financialTerms:
 					query = self.generateQuery(c,i)
 					financialSearch = urllib.urlopen(query)
 					financialTweets = json.loads(financialSearch.read())
-					for ft in financialTweets[S_RESULTS]:
-						self.weightedTweets.append(WeightedTweet(ft, c))
+					if(financialTweets[S_RESULTS]):
+						for ft in financialTweets[S_RESULTS]:
+							self.weightedTweets.append(WeightedTweet(ft, c))
 
                 #update sinceID to latest tweet
-		print "From: {0}".format(self.sinceID)
 		if(len(self.weightedTweets) > 0):
                 	self.sinceID = self.weightedTweets[len(self.weightedTweets)-1].asDict()[S_ID]
-		print "To: {0}".format(self.sinceID)
 
 
 	def getTweetsAsDicts(self):
@@ -145,13 +148,14 @@ class TweetCache:
 				allTweetDict.append(wt.asDict())
 			return allTweetDict
 		else:
-			print "No tweets in cache"
+			raise TweetCacheError("No new tweets found")
 
 	def getTweets(self):
 		if(len(self.weightedTweets) > 0):
 			return self.weightedTweets
 		else:
-			print "No tweets in cache"
+			raise TweetCacheError("No new tweets found")
+			
 			
 
 	def getCreationTime(self):

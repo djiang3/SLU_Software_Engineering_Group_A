@@ -8,7 +8,6 @@ import urllib2
 import zmq
 
 def checkNetworkConnection():
-	print "Connecting to network..."
 	try:
 		connect = urllib2.urlopen('http://www.google.com/', timeout=1)
 		return True
@@ -82,21 +81,40 @@ def main():
 	except twitter.TwitterError:
 		print "Could not authenticate API. Make sure all authentication keys are correct"
 		sys.exit(1)
-	
-	while(1):
-		if(checkNetworkConnection() == True):
-			cache.updateCache()
-			print "Number of Tweets in Cache: {0}".format(cache.getTweetCount())
-			print cache.getTweets()[cache.getTweetCount()-1].getTweetText()
 
-			print "Sending tweet dictionary..."
-			tweet_dict = cache.getTweetsAsDicts()
-			message = json.dumps(tweet_dict)
-			socket.send(message)
-			message = socket.recv()
-			print "Sent!"
+	#print cache.getTweets()[0].getTweetDate()
+
+	#if search returns empty 3 times in a row, cut out
+	timesBlank = 0
+	sleepTime = 10
+
+	print "Connecting to network..."
+	while(1):
+
+		if(checkNetworkConnection() == True):
+			print "Searching for tweets..."
+			cache.updateCache()
+			print "Search returned {0} tweets...".format(cache.getTweetCount())
+			#print cache.getTweets()[cache.getTweetCount()-1].getTweetText()
+
+			try:
+				print "Sending tweet dictionary..."
+				tweet_dict = cache.getTweetsAsDicts()
+				message = json.dumps(tweet_dict)
+				socket.send(message)
+				message = socket.recv()
+				timesBlank = 0
+				sleepTIme = 10
+				print "Sent!"
+			except tweetcache.TweetCacheError as e:
+				print e.message 
+				timesBlank = timesBlank+1
 			
-		time.sleep(1)
+			if(timesBlank == 3):
+				print "Search was unsuccessful, sleeping for 30 min"
+				sleepTime = 1800
+
+		time.sleep(sleepTime)
 		
 	#TODO send to analyzer
 
