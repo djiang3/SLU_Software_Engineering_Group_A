@@ -30,6 +30,36 @@ import getyql
 def review_features(review):
     return dict([(review, True) for review in review])
  
+# Function that will take in an abbreviated month name and output a string that corresponds to its number value. Outputs this number as a string.
+def month_to_num(month):
+    months_dict = {"Jan":"01","Feb":"02","Mar":"03","Apr":"04", "May":"05", "Jun":"06","Jul":"07","Aug":"08","Sep":"09","Oct":"10","Nov":"11","Dec":"12"}
+    return months_dict[month]
+
+# Function that takes in a tweet object dictionary, finds the date of creation of that tweet, and converts it into a more usable datetime python object.
+# Return value is in iso format.
+def date_convert(tweet_dict):
+    date_tokens = (tweet_dict["created_at"]).split()
+    
+    date_str = list()
+
+    # Appends year (YYYY)
+    date_str.append(date_tokens[3]) 
+    # Appends month (MM)
+    date_str.append(month_to_num(date_tokens[2]))
+    # Appends day (DD)
+    date_str.append(date_tokens[1])
+    # Appends time (HH:MM:SS)
+    date_str.append(date_tokens[4])
+
+    # Creates a string: (YYYY-MM-DD-HH:MM:SS)
+    raw_date = '-'.join(date_str)
+
+    # Creates datetime in format (YYYY-MM-DD HH:MM:SS)
+    date_obj = datetime(*strptime(raw_date, "%Y-%m-%d-%H:%M:%S")[0:6])
+    
+    # Returns datetime in format (YYYY-MM-DDTHH:MM:SS)
+    return date_obj.isoformat()
+
 # Acquires the IDs of the reviews by its sentiment and stores them into negID and posIDs. 
 negIDs = movie_reviews.fileids('neg')
 posIDs = movie_reviews.fileids('pos')
@@ -38,61 +68,73 @@ posIDs = movie_reviews.fileids('pos')
 negReview = [(review_features(movie_reviews.words(fileids=[id])), 'neg') for id in negIDs]
 posReview = [(review_features(movie_reviews.words(fileids=[id])), 'pos') for id in posIDs]
 
-# Tvhe populated training set of all positive and negative reviews in the movie_review corpora.
-trainSet = negReview[:len(negReview)] + posReview[:len(posReview)]
-print "Training on ", len(trainSet), "individual files..."
+def train_on(corpora):
+    # Acquires the IDs of the reviews by its sentiment and stores them into neg ID and posIDs.                       
+    negIDs = corpora.fileids('neg')
+    posIDs = corpora.fileids('pos')
+    
+    #Creates a large dictionary based on review_features of negative and positive reviews.
+    negReview = [(review_features(corpora.words(fileids=[id])), 'neg') for id in negIDs]
+    posReview = [(review_features(corpora.words(fileids=[id])), 'pos') for id in posIDs]
+    
+    # Train the classifier with a populated training set of all positive and negative reviews in the movie_review corpora.
+    trainSet = negReview[:len(negReview)] + posReview[:len(posReview)]
+    print "Training on ", len(trainSet), "individual files..."
 
-#The Naive Bayes Classifer, using the trainSet to train.
-sentimentClassifier = NaiveBayesClassifier.train(trainSet)
-print "Training complete."
+    #The Naive Bayes Classifer, using the trainSet to train.
+    sentiment_classifier = NaiveBayesClassifier.train(trainSet)
+    print "Training complete."
+    return sentiment_classifier
 
-# Connect to the zmq server.
-contextIN = zmq.Context()
-contextOUT = zmq.Context()
-socketIN = contextIN.socket(zmq.REP)
-socketOUT = contextOUT.socket(zmq.REQ)
+def main():
+    # Connect to the zmq server.
+    contextIN = zmq.Context()
+    contextOUT = zmq.Context()
+    socketIN = contextIN.socket(zmq.REP)
+    socketOUT = contextOUT.socket(zmq.REQ)
 
-socketIN.bind("tcp://*:5556")
-socketOUT.connect("tcp://localhost:5555")
+    socketIN.bind("tcp://*:5556")
+    socketOUT.connect("tcp://localhost:5555")
 
-# Have the server run forever.
-while True:
+    s_classifier = train_on(movie_reviews)
+    pos_cnt = 0
+    neg_cnt = 0
+
+    # Have the server run forever.
+    while True:
 	
-    # Wait for the next request from the client and load the message.
-    messageIN = socketIN.recv()
-    rcvd = json.loads(messageIN)
-    print len(rcvd)
-    # Handler for tweet_push type.
-
-    for tweet in rcvd:
-        if tweet['type'] == "tweet_send":
-            tweets = list()
-            
-            temp_tweet = tweet["id"], tweet["text"], tweet["created_at"]
-            tweets.append(temp_tweet)
-                
-#            for twee in tweets: 
- #               tweet_data = {'type': "tweet_send", 'id':tweet[0], 'text':tweet[1], 'date':tweet[2]}
-            
+        # Wait for the next request from the client and load the message.
+        messageIN = socketIN.recv()
+        rcvd = json.loads(messageIN)
         
-            tokens = word_tokenize(tweet["text"])
-            features = review_features(tokens)
-            print tweet["text"]
-            print sentimentClassifier.classify(features), "\n"
-            data_set = {'type': "tweet_push", 'id':tweet["id"] , 'date':tweet["created_at"], 'sentiment' : sentimentClassifier.classify(features)}
+        # Handler for tweet_send type.
+        for tweet in rcvd:
+            if tweet['type'] == "tweet_send":
+	
+                date = date_convert(tweet)
+                sentiment = classify(tweet, s_classifier)   
+               
+                data_set = {'type': "tweet_push", 'company':tweet["company"], 'id':tweet["id"] , 'date': date, 'sentiment' : sentiment}
 
-            messageOUT = json.dumps(data_set)
-            pprint.pprint(data_set)
-            socketOUT.send(messageOUT)
+                print data_set
+                
+                if(sentiment == 'pos'):
+                    pos_cnt += 1
+                else:
+                    neg_cnt += 1
 
-            messageOUT = socketOUT.recv()     
+                messageOUT = json.dumps(data_set)
+                socketOUT.send(messageOUT)
+                messageOUT = socketOUT.recv()     
    
 
-        else:
-            # Send reply back to client that the query is unspecified.
-            print "received unknown query, ignoring"
-            socketIN.send("Ack")
+            else:
+                # Send reply back to client that the query is unspecified.
+                print "received unknown query, ignoring"
+                socketIN.send("Ack") 
+    print "positive/negative:(",pos_cnt,"/",neg_cnt,")"
     socketIN.send("Ack")
+
 
 # Analyzes all tweets in the specified directory and sends the data to the zmq server through port 5555. Sends a dictionary value of its type and the corresponding sentiment rating.
 """
@@ -111,6 +153,10 @@ for files in os.listdir("."):
         socket.send(message)
         message = socket.recv()
 """
+
+
+if __name__ == '__main__':
+    main()
 
 
 
