@@ -9,17 +9,11 @@ from nltk.classify import NaiveBayesClassifier
 from nltk.corpus import movie_reviews
 from nltk import word_tokenize, wordpunct_tokenize
 from nltk.corpus.reader import WordListCorpusReader
-import yql
-import json
-import zmq
-import os
-import pprint
-import urllib
-import simplejson
-import csv
-import time
-import sqlite3
-import getyql
+import yql, json, zmq, os, sqlite3, getyql
+import pprint, urllib, csv
+import time, calendar
+from datetime import datetime
+from time import strptime
 
 
 # Foundation code to incorporate our unique set of corpora, used to train the Naive Bayes Classifier on usefulness of a tweet and the sentiment of the tweet. This code will not be used until we begin to create are own data set for the trainer."""
@@ -60,13 +54,12 @@ def date_convert(tweet_dict):
     # Returns datetime in format (YYYY-MM-DDTHH:MM:SS)
     return date_obj.isoformat()
 
-# Acquires the IDs of the reviews by its sentiment and stores them into negID and posIDs. 
-negIDs = movie_reviews.fileids('neg')
-posIDs = movie_reviews.fileids('pos')
-
-#Creates a large dictionary based on review_features of negative and positive reviews
-negReview = [(review_features(movie_reviews.words(fileids=[id])), 'neg') for id in negIDs]
-posReview = [(review_features(movie_reviews.words(fileids=[id])), 'pos') for id in posIDs]
+# Function that takes in a tweet object dictionary and a classifer and then creates a new dictionary from the tweet with the: id, date, and sentiment.
+def classify(tweet_dict,classifier):
+    text_tokens = word_tokenize(tweet_dict["text"])
+    features = review_features(text_tokens)
+    classification = classifier.classify(features)
+    return classification
 
 def train_on(corpora):
     # Acquires the IDs of the reviews by its sentiment and stores them into neg ID and posIDs.                       
@@ -132,8 +125,8 @@ def main():
                 # Send reply back to client that the query is unspecified.
                 print "received unknown query, ignoring"
                 socketIN.send("Ack") 
-    print "positive/negative:(",pos_cnt,"/",neg_cnt,")"
-    socketIN.send("Ack")
+        print "positive/negative:(",pos_cnt,"/",neg_cnt,")"
+        socketIN.send("Ack")
 
 
 # Analyzes all tweets in the specified directory and sends the data to the zmq server through port 5555. Sends a dictionary value of its type and the corresponding sentiment rating.
