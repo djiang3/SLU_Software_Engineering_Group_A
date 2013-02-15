@@ -60,7 +60,7 @@ while True:
     # Handler for tweet_push type.
     elif rcvd['type'] == "tweet_push":
         print "tweet recieved with a sentiment of %s" % (rcvd['sentiment'])
-        c.execute("INSERT INTO tweets VALUES(NULL, '%s','%d','%s')" % (rcvd['sentiment'], rcvd['id'],rcvd['date']))
+        c.execute("INSERT INTO tweets VALUES(NULL, '%s','%s','%s','%s')" % (rcvd['date'], rcvd['company'], rcvd['id'], rcvd['sentiment']))
         sdb.conn.commit()
         print "added %s into database" % rcvd['sentiment']
         socket.send("Ack")
