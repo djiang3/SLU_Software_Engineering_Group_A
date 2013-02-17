@@ -70,9 +70,9 @@ while True:
         
     # Handler for tweet_pull type, for tweet_trender.
     elif rcvd['type'] == "tweet_pull":
-        print "recieved query for %s over the date range of %s" % (rcvd['keyword'], rcvd['date_range'])
+        print "recieved query for %s over the date range of %s" % (rcvd['company'], rcvd['date_range'])
         pulled_tweets = []
-        for row in c.execute("SELECT * FROM stocks WHERE timestamp = '%s'" % (rcvd['date_range'])):
+        for row in c.execute("SELECT * FROM tweets WHERE company = '%s'" % (rcvd['company'])):
             pulled_tweets.append(row)
         message = json.dumps(pulled_tweets)
         socket.send(message)
