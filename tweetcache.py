@@ -112,9 +112,11 @@ class TweetCache:
 					query = self.generateQuery(c,i)
                                		positiveSearch = urllib.urlopen(query)
 					positiveTweets = json.loads(positiveSearch.read())
-					if(positiveTweets[S_RESULTS]):
+					try:
 						for pt in positiveTweets[S_RESULTS]:
 							self.weightedTweets.append(WeightedTweet(pt, c))
+					except KeyError:
+						raise TweetCachError("Could not find any positive tweets")
 					#else:
 					#	raise TweetCacheError("End of positive tweets")
 	
@@ -123,18 +125,22 @@ class TweetCache:
 					query = self.generateQuery(c,i)
 					negativeSearch = urllib.urlopen(query)
 					negativeTweets = json.loads(negativeSearch.read())
-					if(negativeTweets[S_RESULTS]):
+					try:
 						for nt in negativeTweets[S_RESULTS]:
 							self.weightedTweets.append(WeightedTweet(nt, c))
+					except KeyError:
+						raise TweetCacheError("Could not find any negative tweets")
 
 			if(self.financialTerms):
 				for i in self.financialTerms:
 					query = self.generateQuery(c,i)
 					financialSearch = urllib.urlopen(query)
 					financialTweets = json.loads(financialSearch.read())
-					if(financialTweets[S_RESULTS]):
+					try:
 						for ft in financialTweets[S_RESULTS]:
 							self.weightedTweets.append(WeightedTweet(ft, c))
+					except KeyError:
+						raise TweetCacheError("Could not find any financial tweets")
 
                 #update sinceID to latest tweet
 		if(len(self.weightedTweets) > 0):
