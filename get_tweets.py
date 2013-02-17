@@ -91,9 +91,11 @@ def main():
 
 		if(checkNetworkConnection() == True):
 			print "Searching for tweets..."
-			cache.updateCache()
+			try:
+				cache.updateCache()
+			except tweetcache.TweetCacheError as e:
+				print e.message
 			print "Search returned {0} tweets...".format(cache.getTweetCount())
-			#print cache.getTweets()[cache.getTweetCount()-1].getTweetText()
 
 			try:
 				tweet_dict = cache.getTweetsAsDicts()
