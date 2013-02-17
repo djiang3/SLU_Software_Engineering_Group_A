@@ -114,7 +114,8 @@ def main():
 			
 			if(timesBlank == 3):
 				print "Search was unsuccessful, sleeping for 30 min"
-				sleepTime = 600
+				#sleepTime = 600
+				sleepTime = 1800
 				timesBlank = 0
 
 		time.sleep(sleepTime)
