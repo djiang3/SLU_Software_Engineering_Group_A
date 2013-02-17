@@ -18,9 +18,9 @@ repsective APIs, to pulling existing tweets and stocks for analysis, to
 storing that analysis
 
 start the server with "python zmq_srv.py"
+If the database isn't already created, run "python getyql.py"
 
 ### Populating your stock database
-If the database isn't already created, run "python getyql.py"
 
 The easiset way to generate data for analysis is to pull historical daily 
 stock information for a specific ticker symbol. zmq_loaddaily.py was written
@@ -28,6 +28,17 @@ to do just that! This program will take a ticker symbol, a start date, and an
 end date, and download the daily stock values for each trading day within
 that range inclusive of the dates given.
 
+### Populating your tweet database
+
+To populate the database with tweet information, you must run 
+sentiment_analyzer.py. This is then followed by the get_tweets.py program which
+will take in a company name as its search term. get_tweets.py will output a raw
+tweet object to the sentiment_analyzer, which would then process the 
+information and store into the database a formatted dictionary with:
+   1) "id" of the tweet.
+   2) "date" of the tweet, which is the creation date of that tweet.
+   3) "sentiment" of the tweet, either positive or negative.
+   4) "company" that the tweet is refering to. 
 
 Database Info
 ----------------
