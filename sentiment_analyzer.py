@@ -24,13 +24,14 @@ from time import strptime
 def review_features(review):
     return dict([(review, True) for review in review])
  
-# Function that will take in an abbreviated month name and output a string that corresponds to its number value. Outputs this number as a string.
+# Function that will take in an abbreviated month name and output a string that corresponds to its number value. 
+# *RETURNS* a num representation of the month as a string
 def month_to_num(month):
     months_dict = {"Jan":"01","Feb":"02","Mar":"03","Apr":"04", "May":"05", "Jun":"06","Jul":"07","Aug":"08","Sep":"09","Oct":"10","Nov":"11","Dec":"12"}
     return months_dict[month]
 
 # Function that takes in a tweet object dictionary, finds the date of creation of that tweet, and converts it into a more usable datetime python object.
-# Return value is in iso format.
+# *RETURNS* a datetime object in isoformat
 def date_convert(tweet_dict):
     date_tokens = (tweet_dict["created_at"]).split()
     
@@ -54,13 +55,16 @@ def date_convert(tweet_dict):
     # Returns datetime in format (YYYY-MM-DDTHH:MM:SS)
     return date_obj.isoformat()
 
-# Function that takes in a tweet object dictionary and a classifer and then creates a new dictionary from the tweet with the: id, date, and sentiment.
+# Function that takes in a tweet object dictionary and a classifer and then classifies the the text of the tweet, depending on the classifier.
+# *RETURNS* a classification
 def classify(tweet_dict,classifier):
     text_tokens = word_tokenize(tweet_dict["text"])
     features = review_features(text_tokens)
     classification = classifier.classify(features)
     return classification
 
+# Function that will take in the name of a corpora set(with positive and negative fields) and trains a classifier.
+# *RETURNS* a classifier
 def train_on(corpora):
     # Acquires the IDs of the reviews by its sentiment and stores them into neg ID and posIDs.                       
     negIDs = corpora.fileids('neg')
@@ -99,6 +103,7 @@ def main():
         # Wait for the next request from the client and load the message.
         messageIN = socketIN.recv()
         rcvd = json.loads(messageIN)
+        print "Sending data to server..."
         
         # Handler for tweet_send type.
         for tweet in rcvd:
@@ -106,16 +111,16 @@ def main():
 	
                 date = date_convert(tweet)
                 sentiment = classify(tweet, s_classifier)   
-               
-                data_set = {'type': "tweet_push", 'company':tweet["company"], 'id':tweet["id"] , 'date': date, 'sentiment' : sentiment}
 
-                print data_set
+                data_set = {'type': "tweet_push", 'company':tweet["company"], 'date': date, 'sentiment' : sentiment, 'id' : tweet["id"],'tweet' : tweet['text'] }
                 
+				
                 if(sentiment == 'pos'):
                     pos_cnt += 1
                 else:
                     neg_cnt += 1
 
+                #print "Sending message: ",data_set,"\n"
                 messageOUT = json.dumps(data_set)
                 socketOUT.send(messageOUT)
                 messageOUT = socketOUT.recv()     
@@ -125,6 +130,7 @@ def main():
                 # Send reply back to client that the query is unspecified.
                 print "received unknown query, ignoring"
                 socketIN.send("Ack") 
+        print "Message sent successfully."
         print "positive/negative:(",pos_cnt,"/",neg_cnt,")"
         socketIN.send("Ack")
 
