@@ -32,6 +32,7 @@ while True:
     # Wait for the next request from the client and load the message.
 
     message = socket.recv()
+    print "Recieved message: ", message,"\n"
     rcvd = json.loads(message)
 
     # interpret the query and run database operation

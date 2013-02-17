@@ -103,6 +103,7 @@ def main():
         # Wait for the next request from the client and load the message.
         messageIN = socketIN.recv()
         rcvd = json.loads(messageIN)
+        print "Sending data to server..."
         
         # Handler for tweet_send type.
         for tweet in rcvd:
@@ -112,13 +113,14 @@ def main():
                 sentiment = classify(tweet, s_classifier)   
 
                 data_set = {'type': "tweet_push", 'company':tweet["company"], 'date': date, 'sentiment' : sentiment, 'id' : tweet["id"],'tweet' : tweet['text'] }
-
+                
 				
                 if(sentiment == 'pos'):
                     pos_cnt += 1
                 else:
                     neg_cnt += 1
 
+                #print "Sending message: ",data_set,"\n"
                 messageOUT = json.dumps(data_set)
                 socketOUT.send(messageOUT)
                 messageOUT = socketOUT.recv()     
@@ -128,6 +130,7 @@ def main():
                 # Send reply back to client that the query is unspecified.
                 print "received unknown query, ignoring"
                 socketIN.send("Ack") 
+        print "Message sent successfully."
         print "positive/negative:(",pos_cnt,"/",neg_cnt,")"
         socketIN.send("Ack")
 
