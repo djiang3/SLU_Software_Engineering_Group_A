@@ -52,10 +52,6 @@ def main():
 		print 'usage: get_tweets.py COMPANY [COMPANY COMPANY...]'
 		sys.exit(1)
 	
-	context = zmq.Context()
-	socket = context.socket(zmq.REQ)
-	socket.connect ("tcp://localhost:5556")
-
 	companies = []
 	for c in range(len(sys.argv)-1):
 		companies.append(sys.argv[c+1])
@@ -64,6 +60,8 @@ def main():
 	if(checkNetworkConnection() == False):
 		print "No network connection detected"
 		sys.exit(1)
+
+	context = zmq.Context()
 
 	keys = decrypt()
 
@@ -100,9 +98,13 @@ def main():
 			try:
 				tweet_dict = cache.getTweetsAsDicts()
 				print "Sending tweet dictionary..."
-				message = json.dumps(tweet_dict)
-				socket.send(message)
-				message = socket.recv()
+
+				try:
+					cache.sendToServer(context, tweet_dict)
+				except tweetcache.TweetCacheError as e:
+					print e.message
+					sys.exit(1)
+
 				timesBlank = 0
 				sleepTIme = 10
 				print "Sent!"
