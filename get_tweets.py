@@ -48,14 +48,14 @@ def initializeAPI(keys):
 
 def main():
 
-	context = zmq.Context()
-	socket = context.socket(zmq.REQ)
-	socket.connect ("tcp://localhost:5556")
-
 	if(len(sys.argv) < 2):
 		print 'usage: get_tweets.py COMPANY [COMPANY COMPANY...]'
 		sys.exit(1)
 	
+	context = zmq.Context()
+	socket = context.socket(zmq.REQ)
+	socket.connect ("tcp://localhost:5556")
+
 	companies = []
 	for c in range(len(sys.argv)-1):
 		companies.append(sys.argv[c+1])
@@ -98,8 +98,8 @@ def main():
 			#print cache.getTweets()[cache.getTweetCount()-1].getTweetText()
 
 			try:
-				print "Sending tweet dictionary..."
 				tweet_dict = cache.getTweetsAsDicts()
+				print "Sending tweet dictionary..."
 				message = json.dumps(tweet_dict)
 				socket.send(message)
 				message = socket.recv()
@@ -112,7 +112,8 @@ def main():
 			
 			if(timesBlank == 3):
 				print "Search was unsuccessful, sleeping for 30 min"
-				sleepTime = 1800
+				sleepTime = 600
+				timesBlank = 0
 
 		time.sleep(sleepTime)
 		
