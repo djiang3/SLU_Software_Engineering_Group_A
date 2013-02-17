@@ -5,6 +5,7 @@ import json
 import os
 import urllib
 import datetime
+import zmq
 
 
 #string constants
@@ -92,7 +93,7 @@ class TweetCache:
 			raise TweetCacheError("SinceID must be a string")
 			sys.exit(1)
 				
-		self.updateCache()
+		#self.updateCache()
 
 
 	def updateCache(self):
@@ -144,7 +145,9 @@ class TweetCache:
 
                 #update sinceID to latest tweet
 		if(len(self.weightedTweets) > 0):
-                	self.sinceID = self.weightedTweets[len(self.weightedTweets)-1].asDict()[S_ID]
+                	self.sinceID = self.weightedTweets[0].asDict()[S_ID]
+			#print self.sinceID
+			#print self.weightedTweets[0].asDict()[S_ID]
 
 
 	def getTweetsAsDicts(self):
@@ -161,7 +164,16 @@ class TweetCache:
 			return self.weightedTweets
 		else:
 			raise TweetCacheError("No new tweets found")
-			
+
+	def sendToServer(self, context, tweetDict):
+		#try:
+		socket = context.socket(zmq.REQ)
+		socket.connect("tcp://localhost:5556")
+                message = json.dumps(tweetDict)
+                socket.send(message)
+                message = socket.recv()
+		#except Error:
+		#	raise TweetCacheError("Could not send info to server")
 			
 
 	def getCreationTime(self):
