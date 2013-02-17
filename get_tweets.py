@@ -48,10 +48,6 @@ def initializeAPI(keys):
 
 def main():
 
-	context = zmq.Context()
-	socket = context.socket(zmq.REQ)
-	socket.connect ("tcp://localhost:5556")
-
 	if(len(sys.argv) < 2):
 		print 'usage: get_tweets.py COMPANY [COMPANY COMPANY...]'
 		sys.exit(1)
@@ -64,6 +60,8 @@ def main():
 	if(checkNetworkConnection() == False):
 		print "No network connection detected"
 		sys.exit(1)
+
+	context = zmq.Context()
 
 	keys = decrypt()
 
@@ -98,11 +96,15 @@ def main():
 			#print cache.getTweets()[cache.getTweetCount()-1].getTweetText()
 
 			try:
-				print "Sending tweet dictionary..."
 				tweet_dict = cache.getTweetsAsDicts()
-				message = json.dumps(tweet_dict)
-				socket.send(message)
-				message = socket.recv()
+				print "Sending tweet dictionary..."
+
+				try:
+					cache.sendToServer(context, tweet_dict)
+				except tweetcache.TweetCacheError as e:
+					print e.message
+					sys.exit(1)
+
 				timesBlank = 0
 				sleepTIme = 10
 				print "Sent!"
@@ -112,7 +114,9 @@ def main():
 			
 			if(timesBlank == 3):
 				print "Search was unsuccessful, sleeping for 30 min"
+				#sleepTime = 600
 				sleepTime = 1800
+				timesBlank = 0
 
 		time.sleep(sleepTime)
 		
