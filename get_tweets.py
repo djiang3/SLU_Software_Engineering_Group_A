@@ -93,6 +93,11 @@ def main():
 		print "No network connection detected"
 		sys.exit(1)
 
+	#start server
+	#os.system("gnome-terminal -e zmq.srv.py > /dev/null 2>&1")
+
+	#start sentiment analyzer
+	#os.system("gnome-terminal -e sentiment_analyzer.py > /dev/null 2>&1")
 
 	context = zmq.Context()
 
@@ -140,7 +145,7 @@ def main():
 						sys.exit(1)
 
 					timesBlank = 0
-					sleepTIme = 10
+					sleepTime = 10
 					print "Sent!"
 				except tweetcache.TweetCacheError as e:
 					print e.message 
