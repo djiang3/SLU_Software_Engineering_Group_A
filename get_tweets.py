@@ -135,7 +135,7 @@ def main():
 					sys.exit(1)
 
 				timesBlank = 0
-				sleepTIme = 10
+				sleepTime = 10
 				print "Sent!"
 			except tweetcache.TweetCacheError as e:
 				print e.message 
