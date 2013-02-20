@@ -17,6 +17,7 @@ company = sys.argv[2]
 year = sys.argv[3]
 month = sys.argv[4]
 day = sys.argv[5]
+dateRange = year + '-' + month + '-' + day
 
 # connect to zmq  
 context = zmq.Context()  
@@ -26,7 +27,7 @@ print "connecting to server %s" % address
 socket.connect(address)
 
 # format and send data package to zmq server
-dataset = {'type' : "tweet_pull", 'company' : company, 'year' : year, 'month' : month, 'day' : day}
+dataset = {'type' : "tweet_pull", 'company' : company, 'dateRange' : dateRange}
 message = json.dumps(dataset)
 socket.send(message)
 
@@ -45,4 +46,6 @@ for row in rcvd:
 avgScore = score/numTweets
 print "%s scored an average sentiment of %f" % (company, avgScore)
 
-dataset = {'type' : 'avgSentiment_push', 'dateRange' : dateRange, 'company' : company, 'sentiment' : avgScore, 'volume' : numTweets}
+dataset = {'type' : 'avgSentiment_push', 'dateRange' : dateRange, 'company' : company, 'dataType' : 'avgSentiment', 'sentiment' : avgScore, 'volume' : numTweets}
+message = json.dumps(dataset)
+socket.send(message)

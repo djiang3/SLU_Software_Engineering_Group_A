@@ -33,8 +33,8 @@ class simpledb:
 
     c.execute('''CREATE TABLE tweets (tweetsID INTEGER PRIMARY KEY, timestamp TEXT, company TEXT, sentiment TEXT, id TEXT, tweet TEXT)''')
   
-    c.execute('''CREATE TABLE sentiments
-                  (tweetID INTEGER PRIMARY KEY, dateRange TEXT, company TEXT, dataType TEXT, timestamp TEXT)''')
+    c.execute('''CREATE TABLE trendPoints
+                  (trendID INTEGER PRIMARY KEY, dateRange TEXT, company TEXT, dataType TEXT, dataValue INTEGER, dataVolume INTEGER)''')
 
     c.execute('''CREATE TABLE trendMap
                   (trendID INTEGER, tweetID INTEGER)''')

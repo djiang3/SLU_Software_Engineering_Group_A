@@ -70,16 +70,21 @@ while True:
         
     # Handler for tweet_pull type, for tweet_trender.
     elif rcvd['type'] == "tweet_pull":
-        print "recieved query for %s over the date range of %s-%s-%s" % (rcvd['company'], rcvd['year'], rcvd['month'], rcvd['day'])
+        print "recieved query for %s over the date range of %s" % (rcvd['company'], rcvd['dateRange'])
         pulled_tweets = []
         
         for row in c.execute("SELECT * FROM tweets WHERE company = '%s'" % (rcvd['company'])):
-            if ((int(row[1][8:10]) == int(rcvd['day'])) and (int(row[1][0:4]) == int(rcvd['year'])) and (int(row[1][5:7]) == int(rcvd['month']))):
+            if ((int(row[1][8:10]) == int(rcvd['dateRange'][8:10])) and (int(row[1][0:4]) == int(rcvd['dateRange'][0:4])) and (int(row[1][5:7]) == int(rcvd['dateRange'][5:7]))):
                 pulled_tweets.append(row)
         print "sending %d tweets to tweet_trender" % len(pulled_tweets)
         message = json.dumps(pulled_tweets)
         socket.send(message)
   
+    elif rcvd['type'] == 'avgSentiment_push':
+        print "recieved push request for %s avgerage sentiment on %s" % (rcvd['company'], rcvd['dateRange'])
+        c.execute("INSERT INTO trendPoints VALUES(NULL, '%s', '%s', '%s', '%d', '%d')" % (rcvd['dateRange'], rcvd['company'], rcvd['dataType'],  rcvd['sentiment'], rcvd['volume']))
+        sbd.conn.commit()
+        print "Stored trendPoint into data base"
     else:
       # Send reply back to client that the query is unspecified.
       print "received unknown query, ignoring"
