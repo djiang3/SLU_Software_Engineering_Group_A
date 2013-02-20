@@ -1,18 +1,22 @@
+from __future__ import division
 import time
 import json
-import datetime
 import zmq
 import sys
 import pprint
 import numpy
 
+# companies in DB : sony, sprint, verizon, samsung
+
 if __name__ == "__main__":
-      if (len(sys.argv) != 4):
-            print "Format arguments as tweet_trender.py serverAddress keyword daterange, please"
+      if (len(sys.argv) != 6):
+            print "Format arguments as tweet_trender.py serverAddress keyword year month day, please"
             exit()
 
-company = sys.argv[1]
-dateRange = sys.argv[2]
+company = sys.argv[2]
+year = sys.argv[3]
+month = sys.argv[4]
+day = sys.argv[5]
 
 # connect to zmq  
 context = zmq.Context()  
@@ -22,16 +26,23 @@ print "connecting to server %s" % address
 socket.connect(address)
 
 # format and send data package to zmq server
-dataset = {'type' : "tweet_pull", 'company' : company, 'date_range' : dateRange }
+dataset = {'type' : "tweet_pull", 'company' : company, 'year' : year, 'month' : month, 'day' : day}
 message = json.dumps(dataset)
 socket.send(message)
 
 message = socket.recv()
 rcvd = json.loads(message)
 
-print message
+numTweets = len(rcvd)
+score = 0
 
+for row in rcvd:
+      if (row[3] == 'pos'):
+            score += 1
+      else:
+            score += -1
+            
+avgScore = score/numTweets
+print "%s scored an average sentiment of %f" % (company, avgScore)
 
-
-
-
+dataset = {'type' : 'avgSentiment_push', 'dateRange' : dateRange, 'company' : company, 'sentiment' : avgScore, 'volume' : numTweets}
