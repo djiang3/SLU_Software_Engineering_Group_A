@@ -30,18 +30,12 @@ class simpledb:
     c = self.conn.cursor()
     c.execute('''CREATE TABLE stocks
                   (id INTEGER PRIMARY KEY, timestamp TEXT, symbol TEXT, price REAL)''')
-<<<<<<< HEAD
-    c.execute('''CREATE TABLE tweets 
-                  (tweetsID INTEGER PRIMARY KEY, timestamp TEXT, company TEXT, id TEXT, sentiment TEXT)''')
-    c.execute('''CREATE TABLE trendData
-                  (tweetID INTEGER PRIMARY KEY, dateRange TEXT, company TEXT, dataType TEXT)''')
-=======
 
     c.execute('''CREATE TABLE tweets (tweetsID INTEGER PRIMARY KEY, timestamp TEXT, company TEXT, sentiment TEXT, id TEXT, tweet TEXT)''')
   
     c.execute('''CREATE TABLE sentiments
                   (tweetID INTEGER PRIMARY KEY, dateRange TEXT, company TEXT, dataType TEXT, timestamp TEXT)''')
->>>>>>> baf28abda50b23a5ace677ef26ecbff8e6be049a
+
     c.execute('''CREATE TABLE trendMap
                   (trendID INTEGER, tweetID INTEGER)''')
     c.execute('''CREATE TABLE subTrendMap

@@ -14,7 +14,7 @@ import pprint, urllib, csv
 import time, calendar
 from datetime import datetime
 from time import strptime
-import pickle
+import pickle, sys
 
 # Foundation code to incorporate our unique set of corpora, used to train the Naive Bayes Classifier on usefulness of a tweet and the sentiment of the tweet. This code will not be used until we begin to create are own data set for the trainer."""
 #os.chdir("/Users/DJiang/nltk_data/corpora/movie_reviews/neg")
@@ -73,22 +73,26 @@ def load_pickle(old_pickle):
 
 def main():
 	
-    # Connect to the zmq server.
+    # Create a port for recieving data on port 5556 (for get_tweets.py)
     contextIN = zmq.Context()
-    contextOUT = zmq.Context()
     socketIN = contextIN.socket(zmq.REP)
-    socketOUT = contextOUT.socket(zmq.REQ)
-
     socketIN.bind("tcp://*:5556")
+
+    # Connect to the zmq server and prepare it to send data
+    contextOUT = zmq.Context()
+    socketOUT = contextOUT.socket(zmq.REQ)
     socketOUT.connect("tcp://localhost:5555")
 
+    # Counters to demonstrate positve / negative sentiments
     pos_cnt = 0
     neg_cnt = 0
     
+    # Load the classifier.
     print "Loading sentiment.pickle..."
     s_classifier = load_pickle('sentiment.pickle')
     print "Loading complete. Waiting for input..."
-    # Have the server run forever.
+
+    # Run the server to accept data from get_tweet and send data to zmq_srv.
     while True:
 	
         # Wait for the next request from the client and load the message.
@@ -96,34 +100,46 @@ def main():
         rcvd = json.loads(messageIN)
         print "Sending data to server..."
         
-        # Handler for tweet_send type.
-        for tweet in rcvd:
-            if tweet['type'] == "tweet_send":
+        try:
+            # Handler for tweet_send type.
+            for tweet in rcvd:
 	
-                date = date_convert(tweet)
-                sentiment = classify(tweet, s_classifier)   
+                # Handler for the "tweet_send" type 
+                if tweet['type'] == "tweet_send":
+	
+                    date = date_convert(tweet)
+                    sentiment = classify(tweet, s_classifier)   
 
-                data_set = {'type': "tweet_push", 'company':tweet["company"], 'date': date, 'sentiment' : sentiment, 'id' : tweet["id"],'tweet' : tweet['text'] }
-                
+                    data_set = {'type': "tweet_push", 'company':tweet["company"], 'date': date, 'sentiment' : sentiment, 'id' : tweet["id"],'tweet' : tweet['text'] }
 				
-                if(sentiment == 'pos'):
-                    pos_cnt += 1
-                else:
-                    neg_cnt += 1
+                    if(sentiment == 'pos'):
+                        pos_cnt += 1
+                    else:
+                        neg_cnt += 1
 
-                #print "Sending message: ",data_set,"\n"
-                messageOUT = json.dumps(data_set)
-                socketOUT.send(messageOUT)
-                messageOUT = socketOUT.recv()     
+                    # Send data to the zmq server
+                    messageOUT = json.dumps(data_set)
+                    socketOUT.send(messageOUT)
+                    messageOUT = socketOUT.recv()     
    
 
-            else:
-                # Send reply back to client that the query is unspecified.
-                print "received unknown query, ignoring"
-                socketIN.send("Ack") 
-        print "Message sent successfully."
-        print "positive/negative:(",pos_cnt,"/",neg_cnt,")"
-        socketIN.send("Ack")
+                else:
+                    # Send reply back to client that the query is unspecified.
+                    print "received unknown query, ignoring"
+                    socketIN.send("Ack") 
+
+            # Send reply back to get_tweet indicating file has been sent.
+            print "Message sent successfully."
+            print "positive/negative:(",pos_cnt,"/",neg_cnt,")"
+            socketIN.send("Ack")
+
+        except:
+            # Handles the dictionary sent to end the process and end the program.
+            if (rcvd['type'] == "tweet_stop"):
+                print "Recieved tweet_stop."
+                print "Shutting down..."
+                
+                sys.exit()
 
 
 # Analyzes all tweets in the specified directory and sends the data to the zmq server through port 5555. Sends a dictionary value of its type and the corresponding sentiment rating.

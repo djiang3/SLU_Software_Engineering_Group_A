@@ -116,6 +116,13 @@ def main():
 			
 			if(timesBlank == 3):
 				print "Search was unsuccessful, sleeping for 30 min"
+				tweet_quit = {'type': "tweet_stop"}
+
+				socket = context.socket(zmq.REQ)
+				socket.connect("tcp://localhost:5556")
+				message = json.dumps(tweet_quit)
+				socket.send(message)
+				message = socket.recv()
 
 				#sleepTime = 600
 				sleepTime = 1800
