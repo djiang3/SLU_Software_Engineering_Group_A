@@ -6,6 +6,8 @@ import tweetcache
 import json
 import urllib2
 import zmq
+import pickle
+import os
 
 def checkNetworkConnection():
 	try:
@@ -46,6 +48,36 @@ def initializeAPI(keys):
 			access_token_secret=atsKey)
 	return api
 
+def saveCacheState(cache):
+
+	#TODO catch try and catch failed save error
+	cacheInfoDict = dict()
+        cacheInfoDict['companies'] = cache.getCompanies()
+        cacheInfoDict['sinceID'] = cache.getSinceID()
+        cacheInfoDict['positiveTerms'] = cache.getPositiveTerms()
+        cacheInfoDict['negativeTerms'] = cache.getNegativeTerms()
+        cacheInfoDict['financialTerms'] = cache.getFinancialTerms()
+        cacheInfoDict['creationTime'] = cache.getCreationTime()
+        cacheInfoDict['tweetCountTotal'] = cache.getTweetCountTotal()
+        cacheInfoDict['tweetCount'] = cache.getTweetCount()
+
+	try:
+        	cacheInfoDict['tweets'] = cache.getTweetsAsDicts()
+	except tweetcache.TweetCacheError as e:
+		print e.message
+	
+	currentTime = time.time()
+	pickleString = "CacheSavePickle:{0}.p".format(currentTime)
+	pickle.dump(cacheInfoDict, open(pickleString, "wb"))
+
+	return 0
+
+def loadCacheState(api):
+	#TODO
+	#load pickle and reinstantiate cache
+	return "hi"
+
+
 def main():
 
 	if(len(sys.argv) < 2):
@@ -60,6 +92,12 @@ def main():
 	if(checkNetworkConnection() == False):
 		print "No network connection detected"
 		sys.exit(1)
+
+	#start server
+	#os.system("gnome-terminal -e zmq.srv.py > /dev/null 2>&1")
+
+	#start sentiment analyzer
+	#os.system("gnome-terminal -e sentiment_analyzer.py > /dev/null 2>&1")
 
 	context = zmq.Context()
 
@@ -80,7 +118,6 @@ def main():
 		print "Could not authenticate API. Make sure all authentication keys are correct"
 		sys.exit(1)
 
-	#print cache.getTweets()[0].getTweetDate()
 
 	#if search returns empty 3 times in a row, cut out
 	timesBlank = 0
@@ -88,23 +125,14 @@ def main():
 
 	print "Connecting to network..."
 	while(1):
-
-		if(checkNetworkConnection() == True):
-			print "Searching for tweets..."
-			try:
-				cache.updateCache()
-			except tweetcache.TweetCacheError as e:
-				print e.message
-			print "Search returned {0} tweets...".format(cache.getTweetCount())
-
-			try:
-				tweet_dict = cache.getTweetsAsDicts()
-				print "Sending tweet dictionary..."
-
+		try:
+			if(checkNetworkConnection() == True):
+				print "Searching for tweets..."
 				try:
-					cache.sendToServer(context, tweet_dict)
+					cache.updateCache()
 				except tweetcache.TweetCacheError as e:
 					print e.message
+<<<<<<< HEAD
 					sys.exit(1)
 
 				timesBlank = 0
@@ -127,8 +155,44 @@ def main():
 				#sleepTime = 600
 				sleepTime = 1800
 				timesBlank = 0
+=======
+				print "Search returned {0} tweets...".format(cache.getTweetCount())
+>>>>>>> aaron/master
 
-		time.sleep(sleepTime)
+				try:
+					tweet_dict = cache.getTweetsAsDicts()
+					print "Sending tweet dictionary..."
+
+					try:
+						cache.sendToServer(context, tweet_dict)
+					except tweetcache.TweetCacheError as e:
+						print e.message
+						sys.exit(1)
+
+					timesBlank = 0
+					sleepTime = 10
+					print "Sent!"
+				except tweetcache.TweetCacheError as e:
+					print e.message 
+					timesBlank = timesBlank+1
+			
+				if(timesBlank == 3):
+					print "Search was unsuccessful, sleeping for 30 min"
+					#sleepTime = 600
+					sleepTime = 1800
+					timesBlank = 0
+
+			time.sleep(sleepTime)
+
+		except KeyboardInterrupt:
+			print "\nStopping Sentiment Analyzer"
+			stopDict = {'type':"tweet_stop"}
+			cache.sendToServer(context, stopDict)
+			
+			print "Saving Cache..."
+			saveCacheState(cache)
+			print "Cache Saved..."
+			exit(1)
 		
 	#TODO send to analyzer
 

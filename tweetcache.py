@@ -69,17 +69,16 @@ class TweetCacheError(Exception):
 
 
 class TweetCache:
-	def __init__(self, api, companies, sinceID="0", positiveTerms=None, negativeTerms=None, financialTerms=None):
+	def __init__(self, api, companies, sinceID="0", positiveTerms=None, negativeTerms=None, financialTerms=None, weightedTweets=[], creationTime=0, tweetCountTotal=0):
 		self.api = api
 		self.companies = companies
 		self.sinceID = sinceID
 		self.positiveTerms = positiveTerms
 		self.negativeTerms = negativeTerms
 		self.financialTerms = financialTerms
-		self.creationTime = 0
-		self.resetTime = 0
-		self.remainingHits = 0
-		self.weightedTweets = []
+		self.weightedTweets = weightedTweets
+		self.creationTime = creationTime
+		self.tweetCountTotal = tweetCountTotal
 
 		self.initializeCache()
 
@@ -93,13 +92,10 @@ class TweetCache:
 			raise TweetCacheError("SinceID must be a string")
 			sys.exit(1)
 				
-		#self.updateCache()
-
-
 	def updateCache(self):
 
                 #get tweets relating to companies
-		self.weightedTweets=[]
+		self.clearCache()
 
 		positiveTweets = []
 		negativeTweets = []
@@ -146,6 +142,7 @@ class TweetCache:
                 #update sinceID to latest tweet
 		if(len(self.weightedTweets) > 0):
                 	self.sinceID = self.weightedTweets[0].asDict()[S_ID]
+
 			#print self.sinceID
 			#print self.weightedTweets[0].asDict()[S_ID]
 
@@ -174,7 +171,6 @@ class TweetCache:
                 message = socket.recv()
 		#except Error:
 		#	raise TweetCacheError("Could not send info to server")
-			
 
 	def getCreationTime(self):
 		return self.creationTime
@@ -185,9 +181,29 @@ class TweetCache:
 	def generateQuery(self, c, t):
 		return S_TWEET_QUERY+c+'+'+t+S_RESULTS_PER_PAGE+S_SINCE_ID+self.sinceID
 
+	#number of tweets currently in cache
 	def getTweetCount(self):
 		return len(self.weightedTweets)
+	
+	def getCompanies(self):
+		return self.companies
+
+	#number of tweets that gone through cache
+	def getTweetCountTotal(self):
+		if(self.tweetCountTotal == 0):
+			return len(self.weightedTweets)
+		return self.tweetCountTotal
+
+	def getPositiveTerms(self):
+		return self.positiveTerms
+
+	def getNegativeTerms(self):
+		return self.negativeTerms
+
+	def getFinancialTerms(self):
+		return self.financialTerms
 
 	def clearCache(self):
+		self.tweetCountTotal = self.tweetCountTotal + len(self.weightedTweets)
 		self.weightedTweets = []
 
