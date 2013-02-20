@@ -7,6 +7,7 @@ import json
 import urllib2
 import zmq
 import pickle
+import os
 
 def checkNetworkConnection():
 	try:
@@ -154,7 +155,11 @@ def main():
 			time.sleep(sleepTime)
 
 		except KeyboardInterrupt:
-			print "\nSaving Cache..."
+			print "\nStopping Sentiment Analyzer"
+			stopDict = {'type':"tweet_stop"}
+			cache.sendToServer(context, stopDict)
+			
+			print "Saving Cache..."
 			saveCacheState(cache)
 			print "Cache Saved..."
 			exit(1)
