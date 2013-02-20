@@ -32,11 +32,8 @@ while True:
     # Wait for the next request from the client and load the message.
 
     message = socket.recv()
-    print("Recieved message")
+    print "Recieved message: ", message,"\n"
     rcvd = json.loads(message)
-    
-    #  Do some 'work'
-    #time.sleep (1)        #   Do some 'work'
 
     # interpret the query and run database operation
     # Interpret the query based on its type value. The run the database operation accordingly.
@@ -53,16 +50,22 @@ while True:
       print "stock pull request received for %s from %s" % (rcvd['symbol'], rcvd['clientname'])
       pulled_stocks = []
       for row in c.execute("SELECT * FROM stocks WHERE symbol = '%s' order by timestamp" % rcvd['symbol']):
-        pulled_stocks.append(row)
+          pulled_stocks.append(row)
       message = json.dumps(pulled_stocks)
       socket.send(message)
 
     # Handler for tweet_push type.
     elif rcvd['type'] == "tweet_push":
-        print "tweet recieved with a sentiment of %s" % (rcvd['sentiment'])
-        c.execute("INSERT INTO tweets VALUES(NULL, '%s','%s','%s','%s')" % (rcvd['date'], rcvd['company'], rcvd['id'], rcvd['sentiment']))
+
+        # Inserts into the database: 
+        #    1. Date
+        #    2. Company
+        #    3. Sentiment
+        #    4. ID
+        #    5. Text of tweet
+        c.execute("INSERT INTO tweets VALUES(NULL,?,?,?,?,?)",(rcvd['date'], rcvd['company'], rcvd['sentiment'], rcvd['id'], rcvd['tweet']))
+
         sdb.conn.commit()
-        print "added %s into database" % rcvd['sentiment']
         socket.send("Ack")
         
     # Handler for tweet_pull type, for tweet_trender.

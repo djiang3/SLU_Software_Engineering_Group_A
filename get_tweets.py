@@ -91,9 +91,11 @@ def main():
 
 		if(checkNetworkConnection() == True):
 			print "Searching for tweets..."
-			cache.updateCache()
+			try:
+				cache.updateCache()
+			except tweetcache.TweetCacheError as e:
+				print e.message
 			print "Search returned {0} tweets...".format(cache.getTweetCount())
-			#print cache.getTweets()[cache.getTweetCount()-1].getTweetText()
 
 			try:
 				tweet_dict = cache.getTweetsAsDicts()
@@ -114,6 +116,7 @@ def main():
 			
 			if(timesBlank == 3):
 				print "Search was unsuccessful, sleeping for 30 min"
+
 				#sleepTime = 600
 				sleepTime = 1800
 				timesBlank = 0
