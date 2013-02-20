@@ -14,16 +14,16 @@ import pprint, urllib, csv
 import time, calendar
 from datetime import datetime
 from time import strptime
-
+import pickle
 
 # Foundation code to incorporate our unique set of corpora, used to train the Naive Bayes Classifier on usefulness of a tweet and the sentiment of the tweet. This code will not be used until we begin to create are own data set for the trainer."""
 #os.chdir("/Users/DJiang/nltk_data/corpora/movie_reviews/neg")
 #tweet_review = nltk.corpus.reader.CategorizedPlaintextCorpusReader('.','.*\.txt', cat_pattern='(\w+)/*')
 
-# Feature set function that builds a dictionary from the reviews, with a value of either positive or negative, followed by the corresponding tweet.
+# Feature set function that builds a dictionary from the reviews, with a value of either positive or negative, followed by the corresponding tweet.            
 def review_features(review):
     return dict([(review, True) for review in review])
- 
+
 # Function that will take in an abbreviated month name and output a string that corresponds to its number value. 
 # *RETURNS* a num representation of the month as a string
 def month_to_num(month):
@@ -63,27 +63,16 @@ def classify(tweet_dict,classifier):
     classification = classifier.classify(features)
     return classification
 
-# Function that will take in the name of a corpora set(with positive and negative fields) and trains a classifier.
-# *RETURNS* a classifier
-def train_on(corpora):
-    # Acquires the IDs of the reviews by its sentiment and stores them into neg ID and posIDs.                       
-    negIDs = corpora.fileids('neg')
-    posIDs = corpora.fileids('pos')
-    
-    #Creates a large dictionary based on review_features of negative and positive reviews.
-    negReview = [(review_features(corpora.words(fileids=[id])), 'neg') for id in negIDs]
-    posReview = [(review_features(corpora.words(fileids=[id])), 'pos') for id in posIDs]
-    
-    # Train the classifier with a populated training set of all positive and negative reviews in the movie_review corpora.
-    trainSet = negReview[:len(negReview)] + posReview[:len(posReview)]
-    print "Training on ", len(trainSet), "individual files..."
-
-    #The Naive Bayes Classifer, using the trainSet to train.
-    sentiment_classifier = NaiveBayesClassifier.train(trainSet)
-    print "Training complete."
-    return sentiment_classifier
+# Function that loads a classifier pickle and sets a new classifer to it.
+# *RETURNS* a classifier from the pickle.
+def load_pickle(old_pickle):
+    relish = open(old_pickle)
+    classifier = pickle.load(relish)
+    relish.close()
+    return classifier
 
 def main():
+	
     # Connect to the zmq server.
     contextIN = zmq.Context()
     contextOUT = zmq.Context()
@@ -93,10 +82,12 @@ def main():
     socketIN.bind("tcp://*:5556")
     socketOUT.connect("tcp://localhost:5555")
 
-    s_classifier = train_on(movie_reviews)
     pos_cnt = 0
     neg_cnt = 0
-
+    
+    print "Loading sentiment.pickle..."
+    s_classifier = load_pickle('sentiment.pickle')
+    print "Loading complete. Waiting for input..."
     # Have the server run forever.
     while True:
 	
