@@ -132,7 +132,6 @@ def main():
 					cache.updateCache()
 				except tweetcache.TweetCacheError as e:
 					print e.message
-<<<<<<< HEAD
 					sys.exit(1)
 
 				timesBlank = 0
@@ -155,9 +154,7 @@ def main():
 				#sleepTime = 600
 				sleepTime = 1800
 				timesBlank = 0
-=======
 				print "Search returned {0} tweets...".format(cache.getTweetCount())
->>>>>>> aaron/master
 
 				try:
 					tweet_dict = cache.getTweetsAsDicts()
