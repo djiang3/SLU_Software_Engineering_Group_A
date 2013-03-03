@@ -166,7 +166,7 @@ class TweetCache:
 		#try:
 		context = zmq.Context()
 		socket = context.socket(zmq.REQ)
-		socket.connect("tcp://192.168.0.16:5556")
+		socket.connect("tcp://localhost:5556")
                 message = json.dumps(tweetDict)
                 socket.send(message)
                 message = socket.recv()
