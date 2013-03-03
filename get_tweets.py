@@ -137,23 +137,7 @@ def main():
 				timesBlank = 0
 				sleepTime = 10
 				print "Sent!"
-			except tweetcache.TweetCacheError as e:
-				print e.message 
-				timesBlank = timesBlank+1
-			
-			if(timesBlank == 3):
-				print "Search was unsuccessful, sleeping for 30 min"
-				tweet_quit = {'type': "tweet_stop"}
 
-				socket = context.socket(zmq.REQ)
-				socket.connect("tcp://localhost:5556")
-				message = json.dumps(tweet_quit)
-				socket.send(message)
-				message = socket.recv()
-
-				#sleepTime = 600
-				sleepTime = 1800
-				timesBlank = 0
 				print "Search returned {0} tweets...".format(cache.getTweetCount())
 
 				try:
