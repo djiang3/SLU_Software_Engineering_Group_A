@@ -113,7 +113,7 @@ class TweetCache:
 						for pt in positiveTweets[S_RESULTS]:
 							self.weightedTweets.append(WeightedTweet(pt, c))
 					except KeyError:
-						raise TweetCachError("Could not find any positive tweets")
+						raise TweetCacheError("Could not find any positive tweets")
 					#else:
 					#	raise TweetCacheError("End of positive tweets")
 	
