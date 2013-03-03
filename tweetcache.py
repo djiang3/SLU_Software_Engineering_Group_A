@@ -164,6 +164,7 @@ class TweetCache:
 
 	def sendToServer(self, context, tweetDict):
 		#try:
+		context = zmq.Context()
 		socket = context.socket(zmq.REQ)
 		socket.connect("tcp://localhost:5556")
                 message = json.dumps(tweetDict)

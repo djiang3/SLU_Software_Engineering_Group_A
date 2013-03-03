@@ -134,8 +134,6 @@ def main():
 					print e.message
 					sys.exit(1)
 
-				timesBlank = 0
-				sleepTime = 10
 				print "Sent!"
 
 				print "Search returned {0} tweets...".format(cache.getTweetCount())
@@ -150,8 +148,6 @@ def main():
 						print e.message
 						sys.exit(1)
 
-					timesBlank = 0
-					sleepTime = 10
 					print "Sent!"
 				except tweetcache.TweetCacheError as e:
 					print e.message 
@@ -160,10 +156,11 @@ def main():
 				if(timesBlank == 3):
 					print "Search was unsuccessful, sleeping for 30 min"
 					#sleepTime = 600
-					sleepTime = 1800
+					sleepTime = 30
 					timesBlank = 0
 
 			time.sleep(sleepTime)
+			sleepTime = 10
 
 		except KeyboardInterrupt:
 			print "\nStopping Sentiment Analyzer"
