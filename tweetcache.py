@@ -85,7 +85,6 @@ class TweetCache:
 
 	def initializeCache(self):
 
-		#set creation time
 		self.creationTime = time.time()
 
 		if(isinstance(self.sinceID, str) == False):
