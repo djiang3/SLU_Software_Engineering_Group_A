@@ -64,6 +64,7 @@ def saveCacheState(cache):
 	try:
         	cacheInfoDict['tweets'] = cache.getTweetsAsDicts()
 	except tweetcache.TweetCacheError as e:
+		cacheInfoDict['tweets'] = []
 		print e.message
 	
 	currentTime = time.time()
@@ -120,6 +121,8 @@ def main():
 
 	companies = []
 	pickleCache = 0
+
+	#read command line input
 	if(len(sys.argv) == 2 and sys.argv[1] != "-p" ):
 		companies = sys.argv[1].split(' ')
 	elif(len(sys.argv) == 3 and (sys.argv[1] == "-p" or sys.argv[2] == "-p")):
@@ -129,6 +132,7 @@ def main():
 			company = company.replace('_', ' ')
 		pickleCache = loadCacheState(api, companies=companies)
 
+	#remove previous pickle
 	removePickles()
 
 	#check network connection
@@ -169,7 +173,7 @@ def main():
 					cache.updateCache()
 				except tweetcache.TweetCacheError as e:
 					print e.message
-					sys.exit(1)
+					#sys.exit(1)
 
 				print "Search returned {0} tweets...".format(cache.getTweetCount())
 
@@ -190,8 +194,8 @@ def main():
 			
 				if(timesBlank == 3):
 					print "Search was unsuccessful, sleeping for 30 min"
-					#sleepTime = 600
-					sleepTime = 30
+					sleepTime = 600
+					#sleepTime = 30
 					timesBlank = 0
 
 			time.sleep(sleepTime)
