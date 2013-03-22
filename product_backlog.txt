@@ -68,15 +68,18 @@ stock and tweet data
       - avg sentiment vs stock prices (3 day delay)
       - and more
 
-Create a text based user interface that combines all		 Darrel		Pending
+Create a text based user interface that combines all		 Darrel,Aaron	Pending
 the programs into one package that can be executed
 
-Build a graphics interface					 Darrel		Pending
+Build a graphics interface					 Darrel,Aaron	Pending
 
-Plot inflection points on the stock graph			 Steve		Pending
-
-Add pickle loading capability to the get_tweets program		 Aaron		Pending
+Add pickle loading capability to the get_tweets program		 Aaron		Complete
 that will enable the resuming of searches
 
 Add a kill functionality to exit the get tweets program		 Darrel,Aaron	Complete
 and the sentiment analyzer upon control-C
+
+Improve the tweet classifier by manually scoring tweets		 All		Pending
+	- 0/1000 tweets								Pending
+	- 0/2000 tweets								Pending
+	- 0/3000 tweets								Pending
