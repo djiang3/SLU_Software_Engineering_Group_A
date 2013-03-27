@@ -67,12 +67,12 @@ def output_file(dict_list, mode):
 	
 	for dict in dict_list:	master_list.append(dict)
 	for dict in dict_list:
-				if(dict['sentiment'] == 'positive'):
-					pos_list.append(dict)
-				if(dict['sentiment'] == 'negative'):
-					neg_list.append(dict)
-				if(dict['sentiment'] == 'neutral'):
-					neu_list.append(dict)
+		if(dict['sentiment'] == 'positive'):
+			pos_list.append(dict)
+		if(dict['sentiment'] == 'negative'):
+			neg_list.append(dict)
+		if(dict['sentiment'] == 'neutral'):
+			neu_list.append(dict)
 	
 	if(mode == '-jM'):
 		master = json.dumps(master_list)

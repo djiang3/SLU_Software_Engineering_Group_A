@@ -1,0 +1,85 @@
+Product Backlog
+	
+TASK DESCRIPTION			            		ORIGIN	 	STATUS
+			
+Create a sentiment analyzer structure that can classify		Darrel		Complete 
+files with the movie review corpus.		
+
+Create a corpora from tweet data that will train the 
+classifier to sort positive and negative tweets.		Darrel		Pending
+
+Create a corpora from tweet data that will train the
+classifier to sort useful and trash tweets.			Darrel		Pending
+
+Construct a program to enable faster tweet labeling		Darrel		Complete
+
+Construct TweetCache object for retrieving/updating           	Aaron		Complete
+tweets
+		- optimize search (possible)
+
+Create WeightedTweet object for robust tweet access		Aaron		Pending
+		- add getDate function
+		- add getDateInSeconds function
+
+Create daemon script for TweetCache				Aaron		Pending
+		- add forking
+
+Pull live stocks and send to database				 Steve		Pending
+
+Pull historical stocks and send to database           		 Steve     	Pending
+
+Stock_push db network request                    		 Devon,Steve   	Pending
+
+Stock_pull db network request                     		 Devon,Steve   	Pending
+
+Tweet_push db network request                     		 Devon,Aaron	Complete
+
+Tweet_pull db network request                     		 Devon,Aaron   	Pending
+
+Tweet_context_push db network request             		 Devon,Darrel  	Complete
+
+Tweet_context_pull db network request             		 Devon,Darrel  	Pending
+
+Prevent sending duplicate stocks from stock_push      		 Steve     	Pending
+
+Recognize if market is currently in session           		 Steve     	Pending
+
+Display graph of pulled stock data                    		 Di        	Pending
+
+Find maxima of given 2d data set                      		 Di        	Pending
+
+Find minima of given 2d data set                      		 Di        	Pending
+
+Find critical points of given 2d data set             		 Di        	Pending
+
+Mining tweets                                         		 Aaron     	Pending
+
+Improve twitter API link                              		 Aaron     	Pending
+
+Display graph of stock and tweet data				 Di		Pending
+
+Create a tool to condense Sander's tweet corpora		 Darrel		Complete
+
+Create a sentiment analyzer with the corpora that 		 Devon		Pending
+incorporates multiple levels, from 0-100.
+
+Draft up the factors we will consider when correlating 		 All		Pending
+stock and tweet data
+      - avg sentiment vs stock prices (3 day delay)
+      - and more
+
+Create a text based user interface that combines all		 Darrel,Aaron	Pending
+the programs into one package that can be executed
+
+Build a graphics interface					 Darrel,Aaron	Pending
+
+Add pickle loading capability to the get_tweets program		 Aaron		Complete
+that will enable the resuming of searches
+
+Add a kill functionality to exit the get tweets program		 Darrel,Aaron	Complete
+and the sentiment analyzer upon control-C
+
+Improve the tweet classifier by manually scoring tweets		 All		Pending
+	- 0/1000 tweets								Pending
+	- 0/2000 tweets								Pending
+	- 0/3000 tweets								Pending
