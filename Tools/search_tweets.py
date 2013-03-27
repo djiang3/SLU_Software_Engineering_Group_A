@@ -15,33 +15,40 @@ import twitter, tweetcache
 
 # Function for submitting and storing a search query to a list with a tweet tuple consisting of an id, text, and time stamp.
 def searchTweets(query):
- temp_list = list()
- search = urllib.urlopen("http://search.twitter.com/search.json?q="+query)
- dict = json.loads(search.read())
- #print dict["results"]
- return dict
-"""
- for result in dict["results"]: # result is a list of dictionaries
-     tweet = result["id"],result["text"], result["created_at"]
-     temp_list.append(tweet)
- return temp_list
- """
+    temp_list = list()
+    search = urllib.urlopen("http://search.twitter.com/search.json?q="+query)
+    dict = json.loads(search.read())
+    
+    # Code for specifying specific fields to include from the tweet.
+    """
+    for result in dict["results"]: # result is a list of dictionaries
+        tweet = result["id"],result["text"], result["created_at"]
+        temp_list.append(tweet)
+    return temp_list """
+
+    return dict
 
 def connect(): 
+
     # Connect to the zmq server.                                                    
     context = zmq.Context()
     socket = context.socket(zmq.REQ)
     socket.connect ("tcp://localhost:5556")
 
 def send():
-#for tweet in tweets:                                             
-    #   tweet_data = {'type': "tweet_send", 'id':tweet[0], 'text':tweet[1], 'date'\:tweet[2]}                                     
-    #  print "sending tweet id: ", tweet[0]                                  
-#message = json.dumps(tweet_data)                                            
+
+    # Code that enables sent data to contain a more specific field for the object.
+    """
+    for tweet in tweets:                                             
+        tweet_data = {'type': "tweet_send", 'id':tweet[0], 'text':tweet[1], 'date'\:tweet[2]}                                     
+        print "sending tweet id: ", tweet[0]                                  
+        message = json.dumps(tweet_data)                                            
+        """
     message = json.dumps(tweets)
     socket.send(message)
     message = socket.recv()
 
+# Decrypt the keys for the twitter API
 def decrypt():
     fname = 'encrypted.txt'
     try:
@@ -56,7 +63,7 @@ def decrypt():
     return dKeys
 
 
-#load api
+# Load the API
 def initializeAPI(keys):
     try:
         cKey = keys[0]
@@ -73,32 +80,34 @@ def initializeAPI(keys):
                           access_token_secret=atsKey)
     return api
 
-#name = "bestbuy"
-#tweet_dict = dict()
-#tweets = searchTweets(name+"+good&rpp=100")
+# Simple search with sentiment key words and financial keywords
+def keyword_search(company):
 
-#searchTweets(name+"+great&rpp=100")
-#searchTweets(name+"+cool&rpp=100")
-#searchTweets(name+"+awesome&rpp=100")
-#searchTweets(name+"+love&rpp=100")
-#searchTweets(name+"+happy&rpp=100")
-#searchTweets(name+"+nice&rpp=100")
-#searchTweets(name+"+thank&rpp=100")
-#
-#searchTweets(name+"+bad&rpp=100")
-#searchTweets(name+"+awful&rpp=100")
-#searchTweets(name+"+terrible&rpp=100")
-#searchTweets(name+"+suck&rpp=100")
-#searchTweets(name+"+unhappy&rpp=100")
-#searchTweets(name+"+poor&rpp=100")
-#searchTweets(name+"+never&rpp=100")
-#searchTweets(name+"+hate&rpp=100")
-#
-#searchTweets(name+"+business&rpp=100")
-#searchTweets(name+"+money&rpp=100")
-#searchTweets(name+"+finance&rpp=100")
+    tweet_dict = dict()
+    tweets = searchTweets(name+"+good&rpp=100")
+    
+    searchTweets(name+"+great&rpp=100")
+    searchTweets(name+"+cool&rpp=100")
+    searchTweets(name+"+awesome&rpp=100")
+    searchTweets(name+"+love&rpp=100")
+    searchTweets(name+"+happy&rpp=100")
+    searchTweets(name+"+nice&rpp=100")
+    searchTweets(name+"+thank&rpp=100")
+
+    searchTweets(name+"+bad&rpp=100")
+    searchTweets(name+"+awful&rpp=100")
+    searchTweets(name+"+terrible&rpp=100")
+    searchTweets(name+"+suck&rpp=100")
+    searchTweets(name+"+unhappy&rpp=100")
+    searchTweets(name+"+poor&rpp=100")
+    searchTweets(name+"+never&rpp=100")
+    searchTweets(name+"+hate&rpp=100")
+    
+    searchTweets(name+"+business&rpp=100")
+    searchTweets(name+"+money&rpp=100")
+    searchTweets(name+"+finance&rpp=100")
+
 # Processes the search query and send the data to the analyzer server, marked as a tweet_push data type.
-
 def main():
 
     if(len(sys.argv) < 2):
@@ -114,8 +123,8 @@ def main():
     print 'initializing api...'
     api = initializeAPI(keys)
 
-    positiveTerms = {'great', 'awesome', 'cool', 'love', 'happy', 'nice', 'thank'}
-    negativeTerms = {'bad', 'awful', 'terrible', 'suck', 'unhappy', 'poor', 'hate'}
+    positiveTerms = {'good','great', 'awesome', 'cool', 'love', 'happy', 'nice', 'thank', 'fantastic', 'satisfaction'}
+    negativeTerms = {'bad', 'awful', 'terrible', 'suck', 'unhappy', 'poor', 'hate', 'never', 'poor'}
     financialTerms = {'business', 'money', 'finance'}
 
     print 'initializing tweet cache...'
@@ -129,9 +138,10 @@ def main():
     cache.updateCache()
     tweet_dict = cache.getTweetsAsDicts()
 
+    # Output the query into a json file.
     manual_dict = json.dumps(tweet_dict)
     manual_tweet_sample = open('manual_tweet.json','a')
-    manual_tweet_sample.write(manual_dict+"\n")
+    manual_tweet_sample.write(manual_dict)
     manual_tweet_sample.close
 
 if __name__ == '__main__':
