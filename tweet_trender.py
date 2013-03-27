@@ -35,17 +35,25 @@ message = socket.recv()
 rcvd = json.loads(message)
 
 numTweets = len(rcvd)
-score = 0
+average = 0
+positive = 0
+neutral = 0
+negative = 0
 
 for row in rcvd:
       if (row[3] == 'pos'):
-            score += 1
-      else:
+            positive += 1
+            average += 1
+      else if (row[3] == 'neg'):
+            negative += 1
             score += -1
-            
+      else:
+            neutral += 1
+
 avgScore = score/numTweets
 print "%s scored an average sentiment of %f" % (company, avgScore)
 
-dataset = {'type' : 'avgSentiment_push', 'dateRange' : dateRange, 'company' : company, 'dataType' : 'avgSentiment', 'sentiment' : avgScore, 'volume' : numTweets}
+dataset = {'type' : 'avgSentiment_push', 'dateRange' : dateRange, 'company' : company, 'sentiment' : avgScore, 'positive' : positive, 'negative' : negative, 'neutral' : neutral, 'volume' : numTweets}
+
 message = json.dumps(dataset)
 socket.send(message)
