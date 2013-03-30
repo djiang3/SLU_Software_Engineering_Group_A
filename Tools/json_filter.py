@@ -1,6 +1,8 @@
 # A program that will open a specified file and read from it. It also creates 4separate files for sorting of positive, negative, neutral, and trash tweets as well as a master JSON file of all of these three categories combined. All of these are in JSON.
 
 import json
+import os
+
 
 def begin_sort(data):
     
@@ -9,7 +11,7 @@ def begin_sort(data):
     pos_list = list()
     neg_list = list()
     neu_list = list()
-    trash_list = list()
+    irrel_list = list()
     save = list()
     p_cnt = 0
 
@@ -23,49 +25,6 @@ def begin_sort(data):
         
         # Quit and save the manual sort process, including updating the manual_tweet json to represent existing tweets that have not been sorted yet.
         if(confirm == 'q'):
-            print '\nNumber of tweets processed: ', p_cnt
-
-            
-            # Write all the tweets sorted so far into their respective files of pos, neg, neu, and trash.
-            mas_out = json.dumps(master_list)
-            pos_out = json.dumps(pos_list)
-            neg_out = json.dumps(neg_list)
-            neu_out = json.dumps(neu_list)
-
-            master_sample = open('man_master.json','a')
-            positive_sample = open('man_positive.json','a')
-            negative_sample = open('man_negative.json','a')
-            neutral_sample = open('man_neutral.json','a')
-
-            master_sample.write(mas_out)
-            positive_sample.write(pos_out)
-            negative_sample.write(neg_out)
-            neutral_sample.write(neu_out)
-            
-            master_sample.close()
-            positive_sample.close()
-            negative_sample.close()
-            neutral_sample.close()
-
-
-            
-            # Index counter for determining the last tweet that has been processed.
-            i_cnt = 0      
-            # Left counter used for determining how many tweets are left.
-            l_cnt = 0
-            for dict in data:
-                if(i_cnt >= p_cnt):
-                    save.append(dict)
-                    l_cnt+=1
-                i_cnt += 1
-                
-            # Update the manual_tweet json to represent tweets that have not yet been sorted.
-            manual_json = open('manual_tweet.json', 'w+')
-            save_out = json.dumps(save)
-            manual_json.write(save_out)
-            manual_json.close()
-                
-            print 'Number of tweets remaining: ', l_cnt
             break
     
         # 'z' to confirm that the tweet is positive
@@ -88,9 +47,68 @@ def begin_sort(data):
 
         # 'a' to confirm that the tweet is trash.
         elif(confirm == 'a'):
-            trash_list.append(dict)
+            irrel_list.append(dict)
             master_list.append(dict)
         p_cnt+=1
+
+    try:
+        os.makedirs('samples')
+        print "Making samples folder..."
+    except OSError:
+        print "Entering samples folder..."
+    fn = os.path.join(os.path.dirname(__file__), 'samples')
+    os.chdir(fn)
+
+    # Write all the tweets sorted so far into their respective files of pos, neg, neu, and trash.
+    mas_out = json.dumps(master_list)
+    pos_out = json.dumps(pos_list)
+    neg_out = json.dumps(neg_list)
+    neu_out = json.dumps(neu_list)
+    irrel_out = json.dumps(irrel_list)
+
+    master_sample = open('man_master.json','a')
+    positive_sample = open('man_positive.json','a')
+    negative_sample = open('man_negative.json','a')
+    neutral_sample = open('man_neutral.json','a')
+    irrelevant_sample = open('man_irrelevant.json','a')
+
+    
+    print "Files saving to samples directory..."
+    master_sample.write(mas_out)
+    positive_sample.write(pos_out)
+    negative_sample.write(neg_out)
+    neutral_sample.write(neu_out)
+    irrelevant_sample.write(irrel_out)
+
+    master_sample.close()
+    positive_sample.close()
+    negative_sample.close()
+    neutral_sample.close()
+    irrelevant_sample.close()
+    print "All files saved successfully, saving progress..."
+	            
+	            
+    # Index counter for determining the last tweet that has been processed.
+    i_cnt = 0      
+    # Left counter used for determining how many tweets are left.
+    l_cnt = 0
+    for dict in data:
+        if(i_cnt >= p_cnt):
+            save.append(dict)
+            l_cnt+=1
+        i_cnt += 1
+	                
+    # Update the manual_tweet json to represent tweets that have not yet been sorted.
+    os.chdir('..')
+    manual_json = open('manual_tweet.json', 'w+')
+    save_out = json.dumps(save)
+    manual_json.write(save_out)
+    manual_json.close()
+    
+    print 'Progress saved.'
+    
+    print '\nNumber of tweets processed: ', p_cnt
+    print 'Number of tweets remaining: ', l_cnt
 
 def main():
 
