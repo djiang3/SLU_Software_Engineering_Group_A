@@ -47,6 +47,7 @@ def begin_sort(data):
 
         # 'a' to confirm that the tweet is trash.
         elif(confirm == 'a'):
+            dict['sentiment'] = 'irrelevant'
             irrel_list.append(dict)
             master_list.append(dict)
         p_cnt+=1
