@@ -3,6 +3,16 @@
 import json
 import os
 
+def merge(listA, listB):
+	new_list = list()
+	
+	for tweetA in listA:	
+		new_list.append(tweetA)
+
+	for tweetB in listB:
+		new_list.append(tweetB)
+
+	return new_list
 
 def begin_sort(data):
     
@@ -12,10 +22,28 @@ def begin_sort(data):
     neg_list = list()
     neu_list = list()
     irrel_list = list()
+    
     save = list()
+    save_mas = list()
+    save_pos = list()
+    save_neg = list()
+    save_neu = list()
+    save_irr = list()
+    
     p_cnt = 0
+    check = 0
 
     print('z = Positive\nx = Negative\nc = Neutral\na = Trash\nq = Save and Quit\n[Enter] to skip the tweet.\n')
+
+    try:
+        os.makedirs('samples')
+        print "Making samples folder..."
+    except OSError:
+        print "Entering samples folder..."
+	check = 1
+		
+    fn = os.path.join(os.path.dirname(__file__), 'samples')
+    os.chdir(fn)
 
     # Traverse all dictionaries in the given json file, until q is entered.
     for dict in data:
@@ -25,7 +53,39 @@ def begin_sort(data):
         
         # Quit and save the manual sort process, including updating the manual_tweet json to represent existing tweets that have not been sorted yet.
         if(confirm == 'q'):
-            break
+	
+		if(check == 1):
+			
+			master_sample = open('man_master.json','r+')
+			positive_sample = open('man_positive.json','r+')
+			negative_sample = open('man_negative.json','r+')
+			neutral_sample = open('man_neutral.json','r+')
+			irrelevant_sample = open('man_irrelevant.json','r+')
+		
+			old_mas = json.load(master_sample)
+			old_pos = json.load(positive_sample)
+			old_neg = json.load(negative_sample)
+			old_neu = json.load(neutral_sample)
+			old_irr = json.load(irrelevant_sample)
+			
+			for tweet in old_mas:
+				save_mas.append(tweet)
+			for tweet in old_pos:
+				save_pos.append(tweet)
+			for tweet in old_neg:		
+				save_neg.append(tweet)
+			for tweet in old_neu:
+				save_neu.append(tweet)
+			for tweet in old_irr:	
+				save_irr.append(tweet)
+				
+			master_list = merge(master_list, save_mas)
+			pos_list = merge(pos_list, save_pos)
+			neg_list = merge(neg_list, save_neg)
+			neu_list = merge(neu_list, save_neu)
+			irrel_list = merge(irrel_list, save_irr)
+        
+		break
     
         # 'z' to confirm that the tweet is positive
         elif(confirm == 'z'):
@@ -52,13 +112,6 @@ def begin_sort(data):
             master_list.append(dict)
         p_cnt+=1
 
-    try:
-        os.makedirs('samples')
-        print "Making samples folder..."
-    except OSError:
-        print "Entering samples folder..."
-    fn = os.path.join(os.path.dirname(__file__), 'samples')
-    os.chdir(fn)
 
     # Write all the tweets sorted so far into their respective files of pos, neg, neu, and trash.
     mas_out = json.dumps(master_list)
@@ -67,11 +120,11 @@ def begin_sort(data):
     neu_out = json.dumps(neu_list)
     irrel_out = json.dumps(irrel_list)
 
-    master_sample = open('man_master.json','a')
-    positive_sample = open('man_positive.json','a')
-    negative_sample = open('man_negative.json','a')
-    neutral_sample = open('man_neutral.json','a')
-    irrelevant_sample = open('man_irrelevant.json','a')
+    master_sample = open('man_master.json','w')
+    positive_sample = open('man_positive.json','w')
+    negative_sample = open('man_negative.json','w')
+    neutral_sample = open('man_neutral.json','w')
+    irrelevant_sample = open('man_irrelevant.json','w')
 
     
     print "Files saving to samples directory..."
