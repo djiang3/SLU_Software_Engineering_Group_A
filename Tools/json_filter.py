@@ -47,9 +47,12 @@ def begin_sort(data):
 
     # Traverse all dictionaries in the given json file, until q is entered.
     for dict in data:
-        print dict['text']+'\n'
-
-        confirm = raw_input()
+        try:
+       		print dict['text']+'\n'
+		confirm = raw_input()
+	except UnicodeEncodeError:
+		confirm = 'skip'
+			        
         
         # Quit and save the manual sort process, including updating the manual_tweet json to represent existing tweets that have not been sorted yet.
         if(confirm == 'q'):
@@ -110,6 +113,7 @@ def begin_sort(data):
             dict['sentiment'] = 'irrelevant'
             irrel_list.append(dict)
             master_list.append(dict)
+
         p_cnt+=1
 
 
