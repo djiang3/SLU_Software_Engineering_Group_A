@@ -86,11 +86,10 @@ if __name__ == "__main__":
     print 'dtarr', dtarr[:20]
     print len(dtarr)
     #for i in arr
-	
 
     xs = pylab.arange(0, len(dtarr), 1)
-    f = interpolate.splrep(xs,arr)
-    print f
+    #f = interpolate.splrep(xs,arr)
+    #print f
     """
     # curve fitting, find the equation
     xs = pylab.arange(0, len(dtarr), 1)
@@ -102,13 +101,19 @@ if __name__ == "__main__":
     print 'xs', xs[:-20]
     print len(xs)
 
-    #print 'ys', ys[:-20]
-    #print len(ys)
+    coeff = polyfit(xs,arr,10)
+    polynom = poly1d(coeff)
+    ys = polynom(xs)
+
+    print 'ys', ys[:-20]
+    print len(ys)
 
     pylab.plot_date(dtarr, arr, 'o')
-    #pylab.plot(xs,f(xs),'-')
+    pylab.plot_date(dtarr,ys, '-')
     pylab.ylabel('y')
     pylab.xlabel('x')
+
+    print "coefficents are: ", coeff
 
     #pylab.plot(arr)
     pylab.show()
