@@ -53,7 +53,7 @@ for row in rcvd:
 avgScore = average/numTweets
 print "%s scored an average sentiment of %f" % (company, avgScore)
 
-dataset = {'type' : 'avgSentiment_push', 'dateRange' : dateRange, 'company' : company, 'sentiment' : avgScore, 'positive' : positive, 'negative' : negative, 'neutral' : neutral, 'volume' : numTweets}
+dataset = {'type' : 'avgSentiment_push', 'dateRange' : dateRange, 'company' : company, 'averageValue' : avgScore, 'positive' : positive, 'negative' : negative, 'neutral' : neutral, 'dataVolume' : numTweets}
 
 message = json.dumps(dataset)
 socket.send(message)
