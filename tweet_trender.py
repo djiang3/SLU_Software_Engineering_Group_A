@@ -46,11 +46,11 @@ for row in rcvd:
             average += 1
       else if (row[3] == 'neg'):
             negative += 1
-            score += -1
+            average += -1
       else:
             neutral += 1
 
-avgScore = score/numTweets
+avgScore = average/numTweets
 print "%s scored an average sentiment of %f" % (company, avgScore)
 
 dataset = {'type' : 'avgSentiment_push', 'dateRange' : dateRange, 'company' : company, 'sentiment' : avgScore, 'positive' : positive, 'negative' : negative, 'neutral' : neutral, 'volume' : numTweets}
