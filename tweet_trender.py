@@ -44,7 +44,7 @@ for row in rcvd:
       if (row[3] == 'pos'):
             positive += 1
             average += 1
-      else if (row[3] == 'neg'):
+      elif (row[3] == 'neg'):
             negative += 1
             average += -1
       else:
