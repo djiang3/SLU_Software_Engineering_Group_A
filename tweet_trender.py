@@ -39,12 +39,13 @@ average = 0
 positive = 0
 neutral = 0
 negative = 0
+score = 0
 
 for row in rcvd:
       if (row[3] == 'pos'):
             positive += 1
             average += 1
-      else if (row[3] == 'neg'):
+      elif (row[3] == 'neg'):
             negative += 1
             score += -1
       else:
