@@ -33,8 +33,6 @@ def begin_sort(data):
     p_cnt = 0
     check = 0
 
-    print('z = Positive\nx = Negative\nc = Neutral\na = Trash\nq = Save and Quit\n[Enter] to skip the tweet.\n')
-
     try:
         os.makedirs('samples')
         print "Making samples folder..."
@@ -47,9 +45,14 @@ def begin_sort(data):
 
     # Traverse all dictionaries in the given json file, until q is entered.
     for dict in data:
-        print dict['text']+'\n'
-
-        confirm = raw_input()
+        print('\n***** OPTIONS *****\nz = Positive\nx = Negative\nc = Neutral\na = Irrelevant\nq = Save and Quit\n[Enter] to skip the tweet.\n')
+        
+        try:
+       	    print '****** TEXT ******\n'+dict['text']+'\n'
+            print "__________________________\n"
+	    confirm = raw_input("Sentiment Rating: ")
+	except UnicodeEncodeError:
+		confirm = 'skip'			        
         
         # Quit and save the manual sort process, including updating the manual_tweet json to represent existing tweets that have not been sorted yet.
         if(confirm == 'q'):
@@ -89,28 +92,38 @@ def begin_sort(data):
     
         # 'z' to confirm that the tweet is positive
         elif(confirm == 'z'):
+            print "Sentiment Chosen: Positive"
             dict['sentiment'] = 'positive'
             pos_list.append(dict)
             master_list.append(dict)
 
         # 'x' to confirm that the tweet is negative. 
         elif(confirm == 'x'):
+            print "Sentiment Chosen: Negative"
             dict['sentiment'] = 'negative'
             neg_list.append(dict)
             master_list.append(dict)
 
         # 'c' to confirm that the tweet is neutral. 
         elif(confirm == 'c'):
+            print "Sentiment Chosen: Neutral"
             dict['sentiment'] = 'neutral'
             neu_list.append(dict)
             master_list.append(dict)
 
         # 'a' to confirm that the tweet is trash.
         elif(confirm == 'a'):
+            print "Sentiment Chosen: Irrelevant"
             dict['sentiment'] = 'irrelevant'
             irrel_list.append(dict)
             master_list.append(dict)
-        p_cnt+=1
+
+	else:
+		print "Sentiment Chosen: Tweet skipped."
+		
+	p_cnt+=1
+	print "Tweets Processed: ", p_cnt
+	print "--------------------------"
 
 
     # Write all the tweets sorted so far into their respective files of pos, neg, neu, and trash.
@@ -127,7 +140,7 @@ def begin_sort(data):
     irrelevant_sample = open('man_irrelevant.json','w')
 
     
-    print "Files saving to samples directory..."
+    print "\nSaving sample files to samples directory..."
     master_sample.write(mas_out)
     positive_sample.write(pos_out)
     negative_sample.write(neg_out)
@@ -139,7 +152,7 @@ def begin_sort(data):
     negative_sample.close()
     neutral_sample.close()
     irrelevant_sample.close()
-    print "All files saved successfully, saving progress..."
+    print "All sample files saved successfully, saving progress..."
 	            
 	            
     # Index counter for determining the last tweet that has been processed.
@@ -162,7 +175,8 @@ def begin_sort(data):
     print 'Progress saved.'
     
     print '\nNumber of tweets processed: ', p_cnt
-    print 'Number of tweets remaining: ', l_cnt
+    print 'Number of tweets remaining: ', l_cnt 
+    print '\n'
 
 def main():
 

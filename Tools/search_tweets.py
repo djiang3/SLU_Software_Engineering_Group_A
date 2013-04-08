@@ -140,10 +140,10 @@ def main():
 
     # Output the query into a json file.
     manual_dict = json.dumps(tweet_dict)
-    manual_tweet_sample = open('manual_tweet.json','a')
+    manual_tweet_sample = open('manual_tweet.json','w')
     manual_tweet_sample.write(manual_dict)
 
-    print "search file created."
+    print "Search file created: manual_tweet.json"
     manual_tweet_sample.close
 
 if __name__ == '__main__':
