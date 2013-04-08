@@ -31,10 +31,10 @@ class Application(Frame):
 
 		self.parent.title("GoldMine")
 
-		#Style().configure("TButton", padding=(0, 5, 0, 5))
+		
 
 		self.companyListBox = Listbox(self.parent)
-		self.companyListBox.pack()
+		self.companyListBox.pack(expand=1)
 
 		self.topLabel = Label(self.parent, text="Enter a Company Name")
 		self.topLabel.pack()
@@ -130,7 +130,21 @@ class MaxLengthEntry(Entry):
 def main():
 
 	root = Tk()
-	root.geometry("500x500+150+150")
+	
+	image = Image.open("gold.jpg")
+	#image.resize((400, 500), Image.ANTIALIAS)
+	background = ImageTk.PhotoImage(image=image)
+	backgroundLabel = Label(root, image=background)
+	backgroundLabel.place(x=0, y=0)
+
+	width = background.width()
+	height = background.height()
+
+	root.geometry('%dx%d+0+0' % (width, height))
+
+	print width
+	print height
+
 	app = Application(root)
 	root.mainloop()
 
