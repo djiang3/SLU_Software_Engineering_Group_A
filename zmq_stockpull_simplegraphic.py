@@ -80,11 +80,11 @@ if __name__ == "__main__":
     arr = np.delete(arr, 0)
     dtarr = np.delete(dtarr, 0)
 
-    print 'arr', arr[:20]
-    print len(arr)
+    #print 'arr', arr[:20]
+    #print len(arr)
 
-    print 'dtarr', dtarr[:20]
-    print len(dtarr)
+    #print 'dtarr', dtarr[:20]
+    #print len(dtarr)
     #for i in arr
 
     xs = pylab.arange(0, len(dtarr), 1)
@@ -98,22 +98,27 @@ if __name__ == "__main__":
     ys = pylab.poly(xs)
     """
 
-    print 'xs', xs[:-20]
-    print len(xs)
+    #print 'xs', xs[:-20]
+    #print len(xs)
 
     coeff = polyfit(xs,arr,10)
     polynom = poly1d(coeff)
     ys = polynom(xs)
 
-    print 'ys', ys[:-20]
-    print len(ys)
+    #print 'ys', ys[:-20]
+    #print len(ys)
 
     pylab.plot_date(dtarr, arr, 'o')
     pylab.plot_date(dtarr,ys, '-')
     pylab.ylabel('y')
     pylab.xlabel('x')
 
-    print "coefficents are: ", coeff
+    print "polynomial coefficents are: ", coeff
 
+    ## calculate correlation coeff
+    data = np.array([arr, ys])
+    ccoeff = np.corrcoef(data)
+    
+    print "correlation coeff are: ", ccoeff
     #pylab.plot(arr)
     pylab.show()
