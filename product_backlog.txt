@@ -17,11 +17,11 @@ Construct TweetCache object for retrieving/updating           	Aaron		Complete
 tweets
 		- optimize search (possible)
 
-Create WeightedTweet object for robust tweet access		Aaron		Pending
+Create WeightedTweet object for robust tweet access		Aaron		Complete
 		- add getDate function
 		- add getDateInSeconds function
 
-Create daemon script for TweetCache				Aaron		Pending
+Create daemon script for TweetCache				Aaron		Discarded
 		- add forking
 
 Pull live stocks and send to database				Steve		Pending
@@ -52,9 +52,9 @@ Find minima of given 2d data set                      		Di        	Pending
 
 Find critical points of given 2d data set             		Di        	Pending
 
-Mining tweets                                         		Aaron     	Pending
+Mining tweets                                         		Aaron     	Complete
 
-Improve twitter API link                              		Aaron     	Pending
+Improve twitter API link                              		Aaron     	Discarded
 
 Display graph of stock and tweet data				Di		Pending
 
@@ -68,10 +68,17 @@ stock and tweet data
       - avg sentiment vs stock prices (3 day delay)
       - and more
 
-Create a text based user interface that combines all		Darrel,Aaron	Pending
+Create a text based user interface that combines all		Darrel,Aaron	Discarded
 the programs into one package that can be executed
 
-Build a graphics interface					Darrel,Aaron	Pending
+Build a graphics interface					Aaron		Pending
+	(needs cleaning up)
+
+Build backend connection to datbase for gui			Aaron		Pending
+
+Integrate info from tweet_trender, stock_pull, and graphs	Aaron		Pending
+
+Remove biased terms for search					Aaron		Pending
 
 Add pickle loading capability to the get_tweets program		Aaron		Complete
 that will enable the resuming of searches
