@@ -1,6 +1,9 @@
+
 from Tkinter import *
 from PIL import Image, ImageTk
 import re
+import subprocess
+import os
 
 #string constants
 ALPHANUMERIC_UNDERSCORE = "^[a-zA-Z0-9_ ]*$"
@@ -13,6 +16,11 @@ ALERT_FAILED_SENTIMENT_ANALYZER = 3
 ALERT_FAILED_GET_TWEETS = 4
 ALERT_FAILED_FINANCE_INFO = 5
 
+MAX_LENGTH_COMPANY_NAME = 32
+
+ALERT_ARRAY = ["Invalid Input", "No Network Connection", "Server Problems", \
+		"Sentiment Analyzer Failure", "Aaron's Fault...", "Floundering Financials"]
+
 
 class Application(Frame):
 
@@ -20,56 +28,42 @@ class Application(Frame):
 		Frame.__init__(self, parent, background="white")
 		self.parent = parent
 		self.companies = []
-		self.alerts = ["Invalid Input", \
-				"No Network", \
-				"Sh*tty Server", \
-				"Abhorrent Analyzer", \
-				"Aaron's Fault...", \
-				"Floundering Financials"]
 
-		self.parent.title("GoldMine")
+		self.parent.title("GoldMine")		
 
-
-
-#		self.backgroundImage = Image.open("drunk-baby-piggy.jpg")
-#		connectome = ImageTk.PhotoImage(self.backgroundImage)
-
-#		w = connectome.width()
-#		h = connectome.height()
-
-#		parent.geometry=("%dx%d+0+0" % (w, h))
-
-#		self.backgroundLabel = Label(parent, image=connectome)
-#		self.backgroundLabel.pack(side='top', fill='both', expand='yes')
-
+		self.companyListBox = Listbox(self.parent)
+		self.companyListBox.pack(expand=1)
 
 		self.topLabel = Label(self.parent, text="Enter a Company Name")
 		self.topLabel.pack()
 		
-		self.enterName = Entry(self.parent)
-		self.enterName.pack()
+		self.enterNameMax = MaxLengthEntry(self.parent, maxLength=MAX_LENGTH_COMPANY_NAME)
+		self.enterNameMax.pack()
 
 		self.addButton = Button(self.parent, text="+", command=self.addCompany)
 		self.addButton.pack()
 
-		self.searchButton = Button(self.parent, text="Start the Fun!", command=self.initiateScripts)
+		self.searchButton = Button(self.parent, text="Get My Data", command=self.retreiveData)
 		self.searchButton.pack()
 
+		self.refreshButton = Button(self.parent, text="Refresh", command=self.refreshData)
+		self.refreshButton.pack()
+		#self.restoreMainMenu()
+		
 
 	def addCompany(self):
-		company = self.enterName.get()
+		company = self.enterNameMax.get()
 		newCompany = ""
 		if(company != ""):
 			if not re.match(ALPHANUMERIC_UNDERSCORE, company):
-				self.alertInvalidCharacters(ALERT_INVALID_INPUT)
-				self.enterName.delete(0, END)
+				self.showAlertDialogue(ALERT_INVALID_INPUT)
+				self.enterNameMax.delete(0, END)
 			else:
 				newCompanyPresentation = self.parseInputForPresentation(company)
 				newCompanyGetTweets = self.parseInputForGetTweets(company)
 				self.companies.append(newCompanyGetTweets)
-				newLabel = Label(self.parent, text=newCompanyPresentation)
-				newLabel.pack()
-				self.enterName.delete(0, END)
+				self.companyListBox.insert(END, newCompanyPresentation)
+				self.enterNameMax.delete(0, END)
 
 
 	def parseInputForPresentation(self, input):
@@ -94,26 +88,134 @@ class Application(Frame):
 		return input
 
 
-	def alertInvalidCharacters(self, alertNum):
+	def showAlertDialogue(self, alertNum):
 		alert = Toplevel()
 		alert.title("Something Went Wrong!")
-		alertMessage = Message(alert, text=self.alerts[alertNum])
+		alertMessage = Message(alert, text=ALERT_ARRAY[alertNum])
 		alertMessage.pack()
 		dismiss = Button(alert, text="Dismiss", command=alert.destroy)
 		dismiss.pack()
 
-	
-	def initiateScripts(self):
-		#TODO call goldmine shell to start all processes
+	def retreiveData(self):
+
+		if(len(self.companies) < 1):
+			self.showAlertDialogue(0)
+		else:
+			self.hideMainMenu()
+
+			self.label1 = Label(self.parent, text="Google Average Sentiment: 0.925926")
+			self.label1.pack()
+			self.graph1 = Button(self.parent, text="Show Graph", command=self.showGraph)
+			self.graph1.pack()
+			self.label2 = Label(self.parent, text="Microsoft Average Sentiment: 0.925926")
+			self.label2.pack()
+			self.graph2 = Button(self.parent, text="Show Graph", command=self.showGraph)
+			self.graph2.pack()
+
+			self.backSentiment = Button(self.parent, text="Back", command=self.restoreMainMenu)
+			self.backSentiment.pack(side=BOTTOM)
+			
+				
+#		try:
+#			if(len(companies) > 0):
+#				try:
+#					sub
+#				except IOError:
+#					#get tweets errors
+#			
+#			else:
+#				#throw error
+#		except:
+#			no companies
 		return 0
-		
-		
+
+	def refreshData(self):
+		#TODO reload data from database
+		return 0
+
+	def hideMainMenu(self):
+		self.refreshButton.pack_forget()
+		self.companyListBox.pack_forget()
+		self.enterNameMax.pack_forget()
+		self.addButton.pack_forget()
+		self.searchButton.pack_forget()
+		self.refreshButton.pack_forget()
+		self.topLabel.pack_forget()
+
+	def hideSentimentMenu(self):
+		self.label1.pack_forget()
+		self.label2.pack_forget()
+		self.graph1.pack_forget()
+		self.graph2.pack_forget()
+		self.backSentiment.pack_forget()
+
+	def restoreMainMenu(self):
+		self.hideSentimentMenu()
+
+		self.companyListBox.pack(expand=1)
+		self.topLabel.pack()
+		self.enterNameMax.pack()
+		self.addButton.pack()
+		self.searchButton.pack()
+		self.refreshButton.pack()
+
+	def showGraph(self):
+		self.hideSentimentMenu()
+
+		self.graphLabel = Label(self.parent, text="Move Along. Nothing to See Here...")
+		self.graphLabel.pack(expand=1)
+		self.backGraph = Button(self.parent, text="Back", command=self.restoreSentiment)
+		self.backGraph.pack(side=BOTTOM)
+
+	def restoreSentiment(self):
+		self.hideGraph()
+
+		self.label1.pack()
+		self.graph1.pack()
+		self.label2.pack()
+		self.graph2.pack()
+		self.backSentiment.pack(side=BOTTOM)
+
+
+	def hideGraph(self):
+		self.graphLabel.pack_forget()
+		self.backGraph.pack_forget()
+
+
+
+	
+
+	
+class MaxLengthEntry(Entry):
+
+	def __init__(self, parent, value="", maxLength=None, **kw):
+		self.maxLength = maxLength
+		apply(Entry.__init__, (self, parent), kw)
+
+	def validate(self, value):
+		if self.maxLength:
+			value = value[:self.maxLength]
+		return value
 
 
 def main():
 
 	root = Tk()
-	root.geometry("500x500+150+150")
+	
+	image = Image.open("gold.jpg")
+	#image.resize((400, 500), Image.ANTIALIAS)
+	background = ImageTk.PhotoImage(image=image)
+	backgroundLabel = Label(root, image=background)
+	backgroundLabel.place(x=0, y=0)
+
+	width = background.width()
+	height = background.height()
+
+	root.geometry('%dx%d+0+0' % (width, height))
+
+	print width
+	print height
+
 	app = Application(root)
 	root.mainloop()
 
