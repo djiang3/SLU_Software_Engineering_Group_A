@@ -29,9 +29,7 @@ class Application(Frame):
 		self.parent = parent
 		self.companies = []
 
-		self.parent.title("GoldMine")
-
-		
+		self.parent.title("GoldMine")		
 
 		self.companyListBox = Listbox(self.parent)
 		self.companyListBox.pack(expand=1)
@@ -50,6 +48,7 @@ class Application(Frame):
 
 		self.refreshButton = Button(self.parent, text="Refresh", command=self.refreshData)
 		self.refreshButton.pack()
+		#self.restoreMainMenu()
 		
 
 	def addCompany(self):
@@ -97,7 +96,26 @@ class Application(Frame):
 		dismiss = Button(alert, text="Dismiss", command=alert.destroy)
 		dismiss.pack()
 
-	def retreiveData(self, companies):
+	def retreiveData(self):
+
+		if(len(self.companies) < 1):
+			self.showAlertDialogue(0)
+		else:
+			self.hideMainMenu()
+
+			self.label1 = Label(self.parent, text="Google Average Sentiment: 0.925926")
+			self.label1.pack()
+			self.graph1 = Button(self.parent, text="Show Graph", command=self.showGraph)
+			self.graph1.pack()
+			self.label2 = Label(self.parent, text="Microsoft Average Sentiment: 0.925926")
+			self.label2.pack()
+			self.graph2 = Button(self.parent, text="Show Graph", command=self.showGraph)
+			self.graph2.pack()
+
+			self.backSentiment = Button(self.parent, text="Back", command=self.restoreMainMenu)
+			self.backSentiment.pack(side=BOTTOM)
+			
+				
 #		try:
 #			if(len(companies) > 0):
 #				try:
@@ -108,11 +126,64 @@ class Application(Frame):
 #			else:
 #				#throw error
 #		except:
-#			#can't reach server or other errors
+#			no companies
 		return 0
 
 	def refreshData(self):
+		#TODO reload data from database
 		return 0
+
+	def hideMainMenu(self):
+		self.refreshButton.pack_forget()
+		self.companyListBox.pack_forget()
+		self.enterNameMax.pack_forget()
+		self.addButton.pack_forget()
+		self.searchButton.pack_forget()
+		self.refreshButton.pack_forget()
+		self.topLabel.pack_forget()
+
+	def hideSentimentMenu(self):
+		self.label1.pack_forget()
+		self.label2.pack_forget()
+		self.graph1.pack_forget()
+		self.graph2.pack_forget()
+		self.backSentiment.pack_forget()
+
+	def restoreMainMenu(self):
+		self.hideSentimentMenu()
+
+		self.companyListBox.pack(expand=1)
+		self.topLabel.pack()
+		self.enterNameMax.pack()
+		self.addButton.pack()
+		self.searchButton.pack()
+		self.refreshButton.pack()
+
+	def showGraph(self):
+		self.hideSentimentMenu()
+
+		self.graphLabel = Label(self.parent, text="Move Along. Nothing to See Here...")
+		self.graphLabel.pack(expand=1)
+		self.backGraph = Button(self.parent, text="Back", command=self.restoreSentiment)
+		self.backGraph.pack(side=BOTTOM)
+
+	def restoreSentiment(self):
+		self.hideGraph()
+
+		self.label1.pack()
+		self.graph1.pack()
+		self.label2.pack()
+		self.graph2.pack()
+		self.backSentiment.pack(side=BOTTOM)
+
+
+	def hideGraph(self):
+		self.graphLabel.pack_forget()
+		self.backGraph.pack_forget()
+
+
+
+	
 
 	
 class MaxLengthEntry(Entry):
