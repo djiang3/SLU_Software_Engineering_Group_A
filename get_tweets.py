@@ -5,11 +5,14 @@ import sys
 import tweetcache
 import json
 import urllib2
-
+import zmq
+import pickle
+import os
+import re
 
 def checkNetworkConnection():
 	try:
-		connect = urllib2.urlopen('http://www.google.com/')
+		connect = urllib2.urlopen('http://www.google.com/', timeout=1)
 		return True
 	except urllib2.URLError as ue:
 		return False
@@ -46,40 +49,172 @@ def initializeAPI(keys):
 			access_token_secret=atsKey)
 	return api
 
+def saveCacheState(cache):
+
+	#TODO catch try and catch failed save error
+	cacheInfoDict = dict()
+        cacheInfoDict['companies'] = cache.getCompanies()
+        cacheInfoDict['sinceID'] = cache.getSinceID()
+        cacheInfoDict['positiveTerms'] = cache.getPositiveTerms()
+        cacheInfoDict['negativeTerms'] = cache.getNegativeTerms()
+        cacheInfoDict['financialTerms'] = cache.getFinancialTerms()
+        cacheInfoDict['creationTime'] = cache.getCreationTime()
+        cacheInfoDict['tweetCountTotal'] = cache.getTweetCountTotal()
+
+	try:
+        	cacheInfoDict['tweets'] = cache.getTweetsAsDicts()
+	except tweetcache.TweetCacheError as e:
+		cacheInfoDict['tweets'] = []
+		print e.message
+	
+	currentTime = time.time()
+	pickleString = "CacheSavePickle:{0}.p".format(currentTime)
+	pickle.dump(cacheInfoDict, open(pickleString, "wb"))
+
+	return 0
+
+def loadCacheState(api, companies=[]):
+	cache = 0
+	pl = 0
+	file = 0
+	files = os.listdir(".")
+	for f in files:
+		if re.match("CacheSavePickle", f):
+			file = f
+			p = open(f, 'rb')
+			pl = pickle.load(p)
+			break
+
+	print "Loaded pickle: {0}".format(file)
+	if(pl != 0):
+		if companies:
+			pl['companies'].extend(companies)
+		try:
+			cache = tweetcache.TweetCache(api, pl['companies'], sinceID=str(pl['sinceID']), positiveTerms=pl['positiveTerms'], negativeTerms=pl['negativeTerms'], financialTerms=pl['financialTerms'], creationTime=pl['creationTime'], tweetCountTotal=pl['tweetCountTotal'], weightedTweets=pl['tweets'])
+		except tweetcache.TweetCacheError as e:
+			print e.message
+			print "Failed to create cache from pickle"
+			sys.exit(1)
+
+			
+	return cache
+
+def removePickles():
+	files = []
+	for file in os.listdir("."):
+		if re.match("CacheSavePickle", file):
+			files.append(file)
+	for f in files:
+		os.remove(f)
+	return 0
+
+
 def main():
 
-	if(len(sys.argv) < 2):
-		print 'usage: get_tweets.py COMPANY [COMPANY COMPANY...]'
+	if(len(sys.argv) < 2 or len(sys.argv) > 3):
+		print 'usage: get_tweets.py ["COMPANY [COMPANY COMPANY...]"] [PICKLE]'
 		sys.exit(1)
-	
+
+	print 'initializing api...'
+	keys = decrypt()
+	api = initializeAPI(keys)
+
 	companies = []
-	for c in range(len(sys.argv)-1):
-		companies.append(sys.argv[c+1])
+	pickleCache = 0
+
+	#read command line input
+	if(len(sys.argv) == 2 and sys.argv[1] != "-p" ):
+		companies = sys.argv[1].split(' ')
+	elif(len(sys.argv) == 3 and (sys.argv[1] == "-p" or sys.argv[2] == "-p")):
+		i = sys.argv.index('-p')
+		companies = sys.argv[3-i].split(" ")
+		for company in companies:
+			company = company.replace('_', ' ')
+		pickleCache = loadCacheState(api, companies=companies)
+
+	#remove previous pickle
+	removePickles()
 
 	#check network connection
 	if(checkNetworkConnection() == False):
 		print "No network connection detected"
 		sys.exit(1)
 
-	keys = decrypt()
+	context = zmq.Context()
 
-	print 'initializing api...'
-	api = initializeAPI(keys)
-
-	positiveTerms = {'good', 'great', 'awesome', 'cool', 'love'}
+	positiveTerms = {'great', 'awesome', 'cool', 'love', 'happy', 'nice', 'thank'}
+	negativeTerms = {'bad', 'awful', 'terrible', 'suck', 'unhappy', 'poor', 'hate'}
+	financialTerms = {'business', 'money', 'finance'}
 
 	print 'initializing tweet cache...'
 
-	try:
-		cache = tweetcache.TweetCache(api, companies, useFriends=True, positiveTerms=positiveTerms)
-	except twitter.TwitterError:
-		print "Could not authenticate API. Make sure all authentication keys are correct"
-		sys.exit(1)
+	cache = 0
+	if(pickleCache == 0):
+		try:
+			cache = tweetcache.TweetCache(api, companies, positiveTerms=positiveTerms, negativeTerms=negativeTerms, financialTerms=financialTerms)
+		except twitter.TwitterError:
+			print "Could not authenticate API. Make sure all authentication keys are correct"
+			sys.exit(1)
+	else:
+		cache = pickleCache
 
-	allCacheTweets = cache.getCompanyTweets()
+	print companies
 
-	#TODO add analyzer
+	#if search returns empty 3 times in a row, cut out
+	timesBlank = 0
+	sleepTime = 10
+
+	print "Connecting to network..."
+	while(1):
+		try:
+			if(checkNetworkConnection() == True):
+				print "Searching for tweets..."
+				try:
+					cache.updateCache()
+				except tweetcache.TweetCacheError as e:
+					print e.message
+					#sys.exit(1)
+
+				print "Search returned {0} tweets...".format(cache.getTweetCount())
+
+				try:
+					tweet_dict = cache.getTweetsAsDicts()
+					print "Sending tweet dictionary..."
+					
+					try:
+						cache.sendToServer(context, tweet_dict)
+					except tweetcache.TweetCacheError as e:
+						print e.message
+						sys.exit(1)
+
+					print "Sent!"
+				except tweetcache.TweetCacheError as e:
+					print e.message 
+					timesBlank = timesBlank+1
+			
+				if(timesBlank == 3):
+					print "Search was unsuccessful, sleeping for 30 min"
+					sleepTime = 600
+					#sleepTime = 30
+					timesBlank = 0
+
+			time.sleep(sleepTime)
+			sleepTime = 10
+
+		except KeyboardInterrupt:
+			print "Saving Cache..."
+			saveCacheState(cache)
+			print "Cache Saved..."
+
+			print "\nStopping Sentiment Analyzer"
+			stopDict = {'type':"tweet_stop"}
+			cache.sendToServer(context, stopDict)
+			
+			exit(1)
+		
+	#TODO send to analyzer
 
 
 if __name__ == '__main__':
+
 	main()

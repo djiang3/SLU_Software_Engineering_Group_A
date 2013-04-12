@@ -26,9 +26,21 @@ class simpledb:
     self.conn = sqlite3.connect("sample.db")
 
   def newdb(self):
+    # Instantiate the database
     c = self.conn.cursor()
     c.execute('''CREATE TABLE stocks
-                  (id INTEGER PRIMARY KEY, timestamp INTEGER, symbol TEXT, price REAL)''')
+                  (id INTEGER PRIMARY KEY, timestamp TEXT, symbol TEXT, price REAL)''')
+
+    c.execute('''CREATE TABLE tweets (tweetsID INTEGER PRIMARY KEY, timestamp TEXT, company TEXT, sentiment TEXT, id TEXT, tweet TEXT)''')
+  
+    c.execute('''CREATE TABLE trendPoints
+                  (trendID INTEGER PRIMARY KEY, dateRange TEXT, company TEXT, averageValue INTEGER, positive INTEGER, negative INTEGER, neutral INTEGER, dataVolume INTEGER)''')
+
+    c.execute('''CREATE TABLE trendMap
+                  (trendID INTEGER, tweetID INTEGER)''')
+    
+    c.execute('''CREATE TABLE subTrendMap
+                  (trendID INTEGER, subTrendID INTEGER)''')
     self.conn.commit()
 
   def execute(self, query):
@@ -103,6 +115,7 @@ if __name__ == "__main__":
     print "caught trying to make a new database; excepting"
 
   c = sdb.conn.cursor()
+  
   #c.execute("INSERT INTO stocks VALUES (NULL, %d, '%s', '%s')" % (timestamp, result[0]["symbol"], result[0]["AskRealtime"]))
   #sdb.conn.commit()
   
