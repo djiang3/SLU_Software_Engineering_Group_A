@@ -70,7 +70,7 @@ if __name__ == "__main__":
       """
     print 'arr', arr[:50]
     print len(arr)
-   # print arr[-30:]
+    # print arr[-30:]
     getline = [] # store the date+type
     getDate = []
     getBegin = []
@@ -79,7 +79,7 @@ if __name__ == "__main__":
     getLow = []
     j = -1 # set the number of array
     for i in range (70):
-   # for i in range (len(arr)):
+    # for i in range (len(arr)):
         getline.append(arr[i][1])
         if st.find(getline[i],"09:30")>0:
             j = j + 1    
