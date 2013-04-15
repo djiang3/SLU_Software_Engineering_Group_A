@@ -34,11 +34,17 @@ class Application(Frame):
 		self.companyListBox = Listbox(self.parent)
 		self.companyListBox.pack(expand=1)
 
-		self.topLabel = Label(self.parent, text="Enter a Company Name")
+		self.topLabel = Label(self.parent, text="Please Choose a Company From the List:")
 		self.topLabel.pack()
 		
-		self.enterNameMax = MaxLengthEntry(self.parent, maxLength=MAX_LENGTH_COMPANY_NAME)
-		self.enterNameMax.pack()
+		#self.enterNameMax = MaxLengthEntry(self.parent, maxLength=MAX_LENGTH_COMPANY_NAME)
+		#self.enterNameMax.pack()
+
+		self.listCompanies = ["Microsoft", "Google", "Amazon", "IBM", "Yahoo"]
+		self.listVariable = StringVar()
+		self.listVariable.set(self.listCompanies[0])
+		self.companyDrop = OptionMenu(self.parent, self.listVariable, *self.listCompanies)
+		self.companyDrop.pack()
 
 		self.addButton = Button(self.parent, text="+", command=self.addCompany)
 		self.addButton.pack()
@@ -52,27 +58,19 @@ class Application(Frame):
 		
 
 	def addCompany(self):
-		company = self.enterNameMax.get()
+		company = self.listVariable.get()
 		newCompany = ""
 		if(company != ""):
-			if not re.match(ALPHANUMERIC_UNDERSCORE, company):
-				self.showAlertDialogue(ALERT_INVALID_INPUT)
-				self.enterNameMax.delete(0, END)
-			else:
-				newCompanyPresentation = self.parseInputForPresentation(company)
-				newCompanyGetTweets = self.parseInputForGetTweets(company)
-				self.companies.append(newCompanyGetTweets)
-				self.companyListBox.insert(END, newCompanyPresentation)
-				self.enterNameMax.delete(0, END)
+			self.companyListBox.insert(END, company)
 
-
+	#use to poulate list
 	def parseInputForPresentation(self, input):
 		input = self.genericParse(input)
 		input = input.title()
 
 		return input
 		
-
+	#use for refresh
 	def parseInputForGetTweets(self, input):
 		input = self.genericParse(input)
 		input = input.replace(" ", "_")
@@ -97,38 +95,10 @@ class Application(Frame):
 		dismiss.pack()
 
 	def retreiveData(self):
-
-		if(len(self.companies) < 1):
-			self.showAlertDialogue(0)
-		else:
-			self.hideMainMenu()
-
-			self.label1 = Label(self.parent, text="Google Average Sentiment: 0.925926")
-			self.label1.pack()
-			self.graph1 = Button(self.parent, text="Show Graph", command=self.showGraph)
-			self.graph1.pack()
-			self.label2 = Label(self.parent, text="Microsoft Average Sentiment: 0.925926")
-			self.label2.pack()
-			self.graph2 = Button(self.parent, text="Show Graph", command=self.showGraph)
-			self.graph2.pack()
-
-			self.backSentiment = Button(self.parent, text="Back", command=self.restoreMainMenu)
-			self.backSentiment.pack(side=BOTTOM)
+		#get data from database
+		return 0
 			
 				
-#		try:
-#			if(len(companies) > 0):
-#				try:
-#					sub
-#				except IOError:
-#					#get tweets errors
-#			
-#			else:
-#				#throw error
-#		except:
-#			no companies
-		return 0
-
 	def refreshData(self):
 		#TODO reload data from database
 		return 0
@@ -202,7 +172,7 @@ def main():
 
 	root = Tk()
 	
-	image = Image.open("gold.jpg")
+	image = Image.open("res/gold.jpg")
 	#image.resize((400, 500), Image.ANTIALIAS)
 	background = ImageTk.PhotoImage(image=image)
 	backgroundLabel = Label(root, image=background)
