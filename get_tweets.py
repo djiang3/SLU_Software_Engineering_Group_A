@@ -55,9 +55,6 @@ def saveCacheState(cache):
 	cacheInfoDict = dict()
         cacheInfoDict['companies'] = cache.getCompanies()
         cacheInfoDict['sinceID'] = cache.getSinceID()
-        cacheInfoDict['positiveTerms'] = cache.getPositiveTerms()
-        cacheInfoDict['negativeTerms'] = cache.getNegativeTerms()
-        cacheInfoDict['financialTerms'] = cache.getFinancialTerms()
         cacheInfoDict['creationTime'] = cache.getCreationTime()
         cacheInfoDict['tweetCountTotal'] = cache.getTweetCountTotal()
 
@@ -142,16 +139,12 @@ def main():
 
 	context = zmq.Context()
 
-	positiveTerms = {'great', 'awesome', 'cool', 'love', 'happy', 'nice', 'thank'}
-	negativeTerms = {'bad', 'awful', 'terrible', 'suck', 'unhappy', 'poor', 'hate'}
-	financialTerms = {'business', 'money', 'finance'}
-
 	print 'initializing tweet cache...'
 
 	cache = 0
 	if(pickleCache == 0):
 		try:
-			cache = tweetcache.TweetCache(api, companies, positiveTerms=positiveTerms, negativeTerms=negativeTerms, financialTerms=financialTerms)
+			cache = tweetcache.TweetCache(api, companies)
 		except twitter.TwitterError:
 			print "Could not authenticate API. Make sure all authentication keys are correct"
 			sys.exit(1)
@@ -173,7 +166,6 @@ def main():
 					cache.updateCache()
 				except tweetcache.TweetCacheError as e:
 					print e.message
-					#sys.exit(1)
 
 				print "Search returned {0} tweets...".format(cache.getTweetCount())
 

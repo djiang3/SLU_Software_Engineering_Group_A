@@ -69,13 +69,10 @@ class TweetCacheError(Exception):
 
 
 class TweetCache:
-	def __init__(self, api, companies, sinceID="0", positiveTerms=None, negativeTerms=None, financialTerms=None, weightedTweets=[], creationTime=0, tweetCountTotal=0):
+	def __init__(self, api, companies, sinceID="0", weightedTweets=[], creationTime=0, tweetCountTotal=0):
 		self.api = api
 		self.companies = companies
 		self.sinceID = sinceID
-		self.positiveTerms = positiveTerms
-		self.negativeTerms = negativeTerms
-		self.financialTerms = financialTerms
 		self.weightedTweets = weightedTweets
 		self.creationTime = creationTime
 		self.tweetCountTotal = tweetCountTotal
@@ -96,54 +93,22 @@ class TweetCache:
                 #get tweets relating to companies
 		self.clearCache()
 
-		positiveTweets = []
-		negativeTweets = []
-		financialTweets = []
+		tweets = []
 
                 for c in self.companies:
-			if(self.positiveTerms):
-				#not O(n^3) because of limited search terms
-				#can be improved if needed
-				for i in self.positiveTerms:
-					query = self.generateQuery(c,i)
-                               		positiveSearch = urllib.urlopen(query)
-					positiveTweets = json.loads(positiveSearch.read())
-					try:
-						for pt in positiveTweets[S_RESULTS]:
-							self.weightedTweets.append(WeightedTweet(pt, c))
-					except KeyError:
-						raise TweetCacheError("Could not find any positive tweets")
-					#else:
-					#	raise TweetCacheError("End of positive tweets")
+			query = self.generateQuery(c)
+                        search = urllib.urlopen(query)
+			tweets = json.loads(search.read())
+			try:
+				for pt in tweets[S_RESULTS]:
+					self.weightedTweets.append(WeightedTweet(pt, c))
+			except KeyError:
+				raise TweetCacheError("Could not find any positive tweets")
 	
-			if(self.negativeTerms):
-				for i in self.negativeTerms:
-					query = self.generateQuery(c,i)
-					negativeSearch = urllib.urlopen(query)
-					negativeTweets = json.loads(negativeSearch.read())
-					try:
-						for nt in negativeTweets[S_RESULTS]:
-							self.weightedTweets.append(WeightedTweet(nt, c))
-					except KeyError:
-						raise TweetCacheError("Could not find any negative tweets")
-
-			if(self.financialTerms):
-				for i in self.financialTerms:
-					query = self.generateQuery(c,i)
-					financialSearch = urllib.urlopen(query)
-					financialTweets = json.loads(financialSearch.read())
-					try:
-						for ft in financialTweets[S_RESULTS]:
-							self.weightedTweets.append(WeightedTweet(ft, c))
-					except KeyError:
-						raise TweetCacheError("Could not find any financial tweets")
 
                 #update sinceID to latest tweet
 		if(len(self.weightedTweets) > 0):
                 	self.sinceID = self.weightedTweets[0].asDict()[S_ID]
-
-			#print self.sinceID
-			#print self.weightedTweets[0].asDict()[S_ID]
 
 
 	def getTweetsAsDicts(self):
@@ -178,8 +143,8 @@ class TweetCache:
 	def getSinceID(self):
 		return self.sinceID
 
-	def generateQuery(self, c, t):
-		return S_TWEET_QUERY+c+'+'+t+S_RESULTS_PER_PAGE+S_SINCE_ID+self.sinceID
+	def generateQuery(self, c):
+		return S_TWEET_QUERY+c+'+'+S_RESULTS_PER_PAGE+S_SINCE_ID+self.sinceID
 
 	#number of tweets currently in cache
 	def getTweetCount(self):
@@ -193,15 +158,6 @@ class TweetCache:
 		if(self.tweetCountTotal == 0):
 			return len(self.weightedTweets)
 		return self.tweetCountTotal
-
-	def getPositiveTerms(self):
-		return self.positiveTerms
-
-	def getNegativeTerms(self):
-		return self.negativeTerms
-
-	def getFinancialTerms(self):
-		return self.financialTerms
 
 	def clearCache(self):
 		self.tweetCountTotal = self.tweetCountTotal + len(self.weightedTweets)
