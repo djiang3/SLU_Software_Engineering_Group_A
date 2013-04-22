@@ -27,7 +27,8 @@ class graphanalysis:
     else:
       raise Exception("Invalid graph type created")
   
-    xs = pylab.arange(0, len(self.dtarr), 1)
+    self.xs = pylab.arange(0, len(self.dtarr), 1)
+    self.ys = None
 
   def process_json_stock(self, rcvd):
     # processes json packet of information
@@ -48,38 +49,62 @@ class graphanalysis:
 
   def process_json_tweet(self, rcvd):
     # process json packet of daily tweet sentiment data
-    pass
+    self.arr = np.array([0])
+    self.dtarr = np.array([0])
+    #process each row
+    for row in rcvd:
+      self.dt     = datetime.strptime(row[1][:10],'%Y-%m-%d')
+      self.dtarr  = np.vstack((self.dtarr, [self.dt]))
+      self.arr    = np.vstack((self.arr, [row[3]]))   # [row[0], row[1], row[2], row[3]]))
+      #pprint.pprint(row)
 
-  def interpolate(self):
+    self.arr = np.delete(self.arr, 0)
+    self.dtarr = np.delete(self.dtarr, 0)
+
+
+  def interpolate(self, coeffs):
     # run graph anaylsis
 
     # make iterator values over length of date array
     self.xs = pylab.arange(0, len(self.dtarr), 1)
 
     # polynomial fit of the graph we have (this time just use 10)
-    self.coeff    = np.polyfit(self.xs, self.arr, 10)
+    self.coeff    = np.polyfit(self.xs, self.arr, coeffs)
     self.polynom  = np.poly1d(self.coeff)
     self.ys       = self.polynom(self.xs)
 
   def run_plot(self):
+    print "debug output first:"
+    print "*** dtarr: "
+    print self.dtarr
+    print "*** arr: "
+    print self.arr
+    
+    print "plotting raw datapoints"
     pylab.plot_date(self.dtarr, self.arr, 'o')
-    pylab.plot_date(self.dtarr, self.ys, '-')
+
+    # have we interpolated recently?
+    if self.ys is None:
+      pass
+    else:
+      print "plotting interpolated datapoints"
+      pylab.plot_date(self.dtarr, self.ys, '-')
+
     pylab.ylabel('y')
     pylab.xlabel('x')
+
 
     pylab.show()
 
 if __name__ == "__main__":
   if len(sys.argv) < 3:
-    print "usage: graphanalysis ADDR TICKER [TICKER TICKER..]"
+    print "usage: graphanalysis ADDR TICKER BIZNAME"
 
     pprint.pprint(sys.argv)
     exit()
 
-  tickers = []
-
-  for itr in range( len(sys.argv)-2 ):
-    tickers.append(sys.argv[itr+2])
+  tickers = [sys.argv[2]]
+  biznames = [sys.argv[3]]
 
   context = zmq.Context()
 
@@ -89,7 +114,7 @@ if __name__ == "__main__":
   socket.connect( addr )
 
   for stock in tickers:
-
+    #### bring in stock info
     # format data package
     dataset = {'type' : 'stock_pull', 'symbol' : stock, 'clientname' : 'graphanalysis_test'}
     message = json.dumps(dataset)
@@ -107,5 +132,30 @@ if __name__ == "__main__":
     rcvd = json.loads(message)
 
     stk = graphanalysis(rcvd, 'stock')
-    stk.interpolate()
+    stk.interpolate(10)
     stk.run_plot()
+
+  for bizname in biznames:
+    #### bring in tweet info
+    # format data package
+    dataset = {'type' : 'avgSentiment_pull', 'symbol' : bizname, 'dateRange' : '', 'clientname' : 'graphanalysis_test'}
+    message = json.dumps(dataset)
+    pprint.pprint(dataset)
+
+    # send data package
+    print "Requesting data for ticker ", bizname, "..."
+    socket.send(message)
+
+    # wait for reply
+    message = socket.recv()
+    print "Received reply for ticker ", bizname
+
+    # decode reply
+    rcvd = json.loads(message)
+
+    print "new graphanalysis class for tweet"
+    twt = graphanalysis(rcvd, 'tweet')
+    print "interpolate the graph"
+    #twt.interpolate(4)
+    print "plot it!"
+    twt.run_plot()
