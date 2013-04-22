@@ -12,11 +12,15 @@ import zmq
 S_ID='id_str'
 S_RESULTS='results'
 S_TWEET_QUERY = "http://search.twitter.com/search.json?q="
+S_NEXT_PAGE_QUERY="http://search.twitter.com/search.json"
 S_RESULTS_PER_PAGE="&rpp=100"
 S_SINCE_ID="&since_id="
+S_MAX_ID="&max_id="
+S_PAGE_NUM="&page="
 
 #numeric constants
 N_RESULTS_PER_PAGE=100
+N_INITIAL_PAGE_GRAB=25
 
 
 class WeightedTweet:
@@ -76,8 +80,7 @@ class TweetCache:
 		self.weightedTweets = weightedTweets
 		self.creationTime = creationTime
 		self.tweetCountTotal = tweetCountTotal
-
-		self.initializeCache()
+		self.initialized = False
 
 
 	def initializeCache(self):
@@ -87,6 +90,35 @@ class TweetCache:
 		if(isinstance(self.sinceID, str) == False):
 			raise TweetCacheError("SinceID must be a string")
 			sys.exit(1)
+
+
+		#get 25 pages for each company
+		#if not 25 pages break
+		tweets = []
+
+                for c in self.companies:
+			#get first page
+			query=self.generateQuery(c)
+			for p in range(N_INITIAL_PAGE_GRAB):
+				print query
+        	                search = urllib.urlopen(query)
+				tweets = json.loads(search.read())
+				try:
+					for pt in tweets[S_RESULTS]:
+						self.weightedTweets.append(WeightedTweet(pt, c))
+				except KeyError:
+					raise TweetCacheError("End of New Tweets")
+				try:
+					query=S_NEXT_PAGE_QUERY+tweets["next_page"]
+				except KeyError:
+					break
+
+		if(len(self.weightedTweets) > 0):
+                	self.sinceID = self.weightedTweets[0].asDict()[S_ID]
+
+		self.initialized=True
+		
+		
 				
 	def updateCache(self):
 
@@ -103,12 +135,14 @@ class TweetCache:
 				for pt in tweets[S_RESULTS]:
 					self.weightedTweets.append(WeightedTweet(pt, c))
 			except KeyError:
-				raise TweetCacheError("Could not find any positive tweets")
+				raise TweetCacheError("End of New Tweets")
 	
 
                 #update sinceID to latest tweet
 		if(len(self.weightedTweets) > 0):
                 	self.sinceID = self.weightedTweets[0].asDict()[S_ID]
+
+		self.initialized=True
 
 
 	def getTweetsAsDicts(self):
@@ -125,6 +159,12 @@ class TweetCache:
 			return self.weightedTweets
 		else:
 			raise TweetCacheError("No new tweets found")
+
+	def isInitialized(self):
+		return self.initialized
+
+	def setInitialized(self, init):
+		self.initialized = init
 
 	def sendToServer(self, context, tweetDict):
 		#try:
@@ -143,8 +183,10 @@ class TweetCache:
 	def getSinceID(self):
 		return self.sinceID
 
-	def generateQuery(self, c):
-		return S_TWEET_QUERY+c+'+'+S_RESULTS_PER_PAGE+S_SINCE_ID+self.sinceID
+	def generateQuery(self, c, maxID=0, i=0):
+		if(maxID == 0):
+			return S_TWEET_QUERY+c+S_RESULTS_PER_PAGE+S_SINCE_ID+self.sinceID
+		return S_TWEET_QUERY+c+S_RESULTS_PER_PAGE+S_MAX_ID+self.maxID+S_PAGE_NUM+i
 
 	#number of tweets currently in cache
 	def getTweetCount(self):

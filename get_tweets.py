@@ -87,7 +87,7 @@ def loadCacheState(api, companies=[]):
 		if companies:
 			pl['companies'].extend(companies)
 		try:
-			cache = tweetcache.TweetCache(api, pl['companies'], sinceID=str(pl['sinceID']), positiveTerms=pl['positiveTerms'], negativeTerms=pl['negativeTerms'], financialTerms=pl['financialTerms'], creationTime=pl['creationTime'], tweetCountTotal=pl['tweetCountTotal'], weightedTweets=pl['tweets'])
+			cache = tweetcache.TweetCache(api, pl['companies'], sinceID=str(pl['sinceID']), creationTime=pl['creationTime'], tweetCountTotal=pl['tweetCountTotal'], weightedTweets=pl['tweets'])
 		except tweetcache.TweetCacheError as e:
 			print e.message
 			print "Failed to create cache from pickle"
@@ -109,7 +109,7 @@ def removePickles():
 def main():
 
 	if(len(sys.argv) < 2 or len(sys.argv) > 3):
-		print 'usage: get_tweets.py ["COMPANY [COMPANY COMPANY...]"] [PICKLE]'
+		print 'usage: get_tweets.py "COMPANY [COMPANY COMPANY...]" [-p]'
 		sys.exit(1)
 
 	print 'initializing api...'
@@ -150,8 +150,7 @@ def main():
 			sys.exit(1)
 	else:
 		cache = pickleCache
-
-	print companies
+		cache.setInitialized(True)
 
 	#if search returns empty 3 times in a row, cut out
 	timesBlank = 0
@@ -163,7 +162,10 @@ def main():
 			if(checkNetworkConnection() == True):
 				print "Searching for tweets..."
 				try:
-					cache.updateCache()
+					if(cache.isInitialized() == True):
+						cache.updateCache()
+					else:
+						cache.initializeCache()
 				except tweetcache.TweetCacheError as e:
 					print e.message
 
