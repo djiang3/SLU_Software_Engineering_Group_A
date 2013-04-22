@@ -118,6 +118,18 @@ if __name__ == "__main__":
   
   #c.execute("INSERT INTO stocks VALUES (NULL, %d, '%s', '%s')" % (timestamp, result[0]["symbol"], result[0]["AskRealtime"]))
   #sdb.conn.commit()
+
   
-  for row in c.execute("SELECT * FROM stocks"):
+  #print "**** dropping trend points"
+  #c.execute('''DROP TABLE trendPoints''')
+  #print "**** adding trendPoints"
+  #c.execute('''CREATE TABLE trendPoints
+  #            (trendID INTEGER PRIMARY KEY, dateRange TEXT, company TEXT, averageValue INTEGER, positive INTEGER, negative INTEGER, neutral INTEGER, dataVolume INTEGER)''')
+
+  print "printing tweets: "
+  for row in c.execute("SELECT * FROM tweets"):
+    print row
+
+  print "printing trendPoints: "
+  for row in c.execute("SELECT * FROM trendPoints"):
     print row

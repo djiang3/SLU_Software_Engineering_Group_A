@@ -81,14 +81,29 @@ while True:
         socket.send(message)
   
     elif rcvd['type'] == 'avgSentiment_push':
+        pprint.pprint(rcvd)
         print "recieved push request for %s avgerage sentiment on %s" % (rcvd['company'], rcvd['dateRange'])
-        c.execute("INSERT INTO trendPoints VALUES(NULL, '%s', '%s', '%s', '%d', '%d')" % (rcvd['dateRange'], rcvd['company'], rcvd['dataType'],  rcvd['sentiment'], rcvd['volume']))
-        sbd.conn.commit()
+        c.execute("INSERT INTO trendPoints VALUES(NULL, '%s', '%s', '%d', '%d', '%d', '%d', '%d')" % (rcvd['dateRange'], rcvd['company'], rcvd['averageValue'], rcvd['positive'], rcvd['negative'], rcvd['neutral'], rcvd['dataVolume']))
+        #'rcvd['dataType'],  rcvd['sentiment'], rcvd['volume']))
+        sdb.conn.commit()
         print "Stored trendPoint into data base"
+        socket.send("Ack")
+
+    elif rcvd['type'] == 'avgSentiment_pull':
+        print "recieved query for %s over the date range of %s" % (rcvd['symbol'], rcvd['dateRange'])
+        pulled_sentiments = []
+        
+        for row in c.execute("SELECT * FROM trendPoints WHERE company = '%s'" % (rcvd['symbol'])):
+            #if ((int(row[1][8:10]) == int(rcvd['dateRange'][8:10])) and (int(row[1][0:4]) == int(rcvd['dateRange'][0:4])) and (int(row[1][5:7]) == int(rcvd['dateRange'][5:7]))):
+            pulled_sentiments.append(row)
+        print "sending %d tweet sentiments to %s" % (len(pulled_sentiments), rcvd['clientname'])
+        message = json.dumps(pulled_sentiments)
+        socket.send(message)
+
     else:
-      # Send reply back to client that the query is unspecified.
-      print "received unknown query, ignoring"
-      socket.send("Ack")
+        # Send reply back to client that the query is unspecified.
+        print "received unknown query, ignoring"
+        socket.send("Ack")
 
 
 
