@@ -9,7 +9,36 @@ import zmq
 import pickle
 import os
 import re
+import threading
 
+# Thread class that will listen for client signals for adding companies.
+class ThreadClass(threading.Thread):
+    def run(self):
+
+        print "inside the thread..."
+        global socketIN
+        global companies
+        global cache
+        global exit
+
+        try:
+            while(exit == 0):
+            
+                messageIN = socketIN.recv()
+                rcvd = json.loads(messageIN)
+        
+                if(rcvd['type'] == "signal_push"):
+                    companies.append(rcvd['company'])
+
+                print "copmanies list: ", cache.getCompanies()
+                print "recieved a message..."
+            
+                socketIN.send('Ack')
+
+        # Kills thread by raising a value error exception, will fix later
+        except ValueError:
+            pass
+    
 def checkNetworkConnection():
 	try:
 		connect = urllib2.urlopen('http://www.google.com/', timeout=1)
@@ -116,7 +145,8 @@ def main():
 	keys = decrypt()
 	api = initializeAPI(keys)
 
-	companies = []
+	global companies 
+        companies = []
 	pickleCache = 0
 
 	#read command line input
@@ -139,9 +169,16 @@ def main():
 
 	context = zmq.Context()
 
-	print 'initializing tweet cache...'
+        # Connections to wait for user signals on port 5554  
+        contextIN = zmq.Context()
+        global socketIN
+        socketIN = contextIN.socket(zmq.REP)
+        socketIN.bind("tcp://*:5554")
 
+	print 'initializing tweet cache...'
+        global cache
 	cache = 0
+
 	if(pickleCache == 0):
 		try:
 			cache = tweetcache.TweetCache(api, companies)
@@ -156,41 +193,51 @@ def main():
 	timesBlank = 0
 	sleepTime = 10
 
+	# initialize the count that increments upon signals from clients.
+        global exit 
+        exit = 0
+
+	# start the thread that will wait for a client signal       
+	rcv = ThreadClass()
+        rcv.start()
+
 	print "Connecting to network..."
 	while(1):
 		try:
 			if(checkNetworkConnection() == True):
-				print "Searching for tweets..."
-				try:
-					if(cache.isInitialized() == True):
-						cache.updateCache()
-					else:
-						cache.initializeCache()
-				except tweetcache.TweetCacheError as e:
-					print e.message
+                            
+                            print "Searching for tweets..."
+                            try:
+                                if(cache.isInitialized() == True):
+                                    cache.updateCache()
+                                else:
+                                    cache.initializeCache()
+                            except tweetcache.TweetCacheError as e:
+                                print e.message
 
-				print "Search returned {0} tweets...".format(cache.getTweetCount())
+                            print "Search returned {0} tweets...".format(cache.getTweetCount())
+				                                    
+                            try:
+                                tweet_dict = cache.getTweetsAsDicts()
+                                print "Sending tweet dictionary..."
+                                
+                                try:
+                                    cache.sendToServer(context, tweet_dict)
+                                except tweetcache.TweetCacheError as e:
+                                    print e.message
+                                    sys.exit(1)
 
-				try:
-					tweet_dict = cache.getTweetsAsDicts()
-					print "Sending tweet dictionary..."
-					
-					try:
-						cache.sendToServer(context, tweet_dict)
-					except tweetcache.TweetCacheError as e:
-						print e.message
-						sys.exit(1)
-
-					print "Sent!"
-				except tweetcache.TweetCacheError as e:
-					print e.message 
-					timesBlank = timesBlank+1
+                                print "Sent!"
+                            
+                            except tweetcache.TweetCacheError as e:
+                                print e.message 
+                                timesBlank = timesBlank+1
 			
-				if(timesBlank == 3):
-					print "Search was unsuccessful, sleeping for 30 min"
-					sleepTime = 600
+                            if(timesBlank == 3):
+                                print "Search was unsuccessful, sleeping for 30 min"
+                                sleepTime = 600
 					#sleepTime = 30
-					timesBlank = 0
+                                timesBlank = 0
 
 			time.sleep(sleepTime)
 			sleepTime = 10
@@ -199,6 +246,13 @@ def main():
 			print "Saving Cache..."
 			saveCacheState(cache)
 			print "Cache Saved..."
+
+                        # My attempt to kill the thread, will fix later.
+                        contextEXIT = zmq.Context()
+                        socketEXIT = contextEXIT.socket(zmq.REQ)
+                        socketEXIT.connect("tcp://localhost:5554")
+                        exit = 1
+                        socketEXIT.send("Ack")
 
 			print "\nStopping Sentiment Analyzer"
 			stopDict = {'type':"tweet_stop"}
