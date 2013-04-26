@@ -195,6 +195,9 @@ class TweetCache:
 	def getCompanies(self):
 		return self.companies
 
+	def addCompanies(self, company):
+		self.companies.append(company)
+
 	#number of tweets that gone through cache
 	def getTweetCountTotal(self):
 		if(self.tweetCountTotal == 0):
