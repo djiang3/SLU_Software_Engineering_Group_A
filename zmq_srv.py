@@ -100,6 +100,40 @@ while True:
         message = json.dumps(pulled_sentiments)
         socket.send(message)
 
+
+    #---------------------------Aaron's additions-------------------
+    #---------------------------------------------------------------
+    
+    #get list of companies to display
+    elif rcvd['type'] == 'gui_get_companies':
+	print "received query for list of companies"
+	companyList = []
+	
+	for row in c.execute("select distinct company from tweets"):
+		companyList.append(row)
+
+        message = json.dumps(companyList)
+        socket.send(message)
+
+
+    #get dates for selected company
+    elif rcvd['type'] == 'gui_get_dates':
+	print "received query for list of dates"
+	companyDates = []
+
+	for row in c.execute("select date from tweets where company = '%s'" % (rcvd['company'])):
+		companyDates.append(row)
+
+	message = json.dumps(companyDates)
+	socket.send(message)
+	
+
+    #-------------------------End of Aaron's Changes-------------
+    #--------------------------------------------------------------
+
+
+
+
     else:
         # Send reply back to client that the query is unspecified.
         print "received unknown query, ignoring"

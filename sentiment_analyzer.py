@@ -138,6 +138,7 @@ def main():
             if (rcvd['type'] == "tweet_stop"):
                 print "Recieved tweet_stop."
                 print "Shutting down..."
+		socketIN.send("Ack")
                 
                 sys.exit()
 

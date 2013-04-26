@@ -2,8 +2,10 @@
 from Tkinter import *
 from PIL import Image, ImageTk
 import re
-import subprocess
 import os
+import zmq
+import urllib2
+import json
 
 #string constants
 ALPHANUMERIC_UNDERSCORE = "^[a-zA-Z0-9_ ]*$"
@@ -24,10 +26,11 @@ ALERT_ARRAY = ["Invalid Input", "No Network Connection", "Server Problems", \
 
 class Application(Frame):
 
-	def __init__(self, parent):
+	def __init__(self, parent, socket):
 		Frame.__init__(self, parent, background="white")
 		self.parent = parent
 		self.companies = []
+		self.socket = socket
 
 		self.parent.title("GoldMine")		
 
@@ -40,7 +43,7 @@ class Application(Frame):
 		#self.enterNameMax = MaxLengthEntry(self.parent, maxLength=MAX_LENGTH_COMPANY_NAME)
 		#self.enterNameMax.pack()
 
-		self.listCompanies = ["Microsoft", "Google", "Amazon", "IBM", "Yahoo"]
+		self.listCompanies = self.refreshCompanyList()
 		self.listVariable = StringVar()
 		self.listVariable.set(self.listCompanies[0])
 		self.companyDrop = OptionMenu(self.parent, self.listVariable, *self.listCompanies)
@@ -52,7 +55,7 @@ class Application(Frame):
 		self.searchButton = Button(self.parent, text="Get My Data", command=self.retreiveData)
 		self.searchButton.pack()
 
-		self.refreshButton = Button(self.parent, text="Refresh", command=self.refreshData)
+		self.refreshButton = Button(self.parent, text="Refresh Company List", command=self.refreshCompanyList)
 		self.refreshButton.pack()
 		#self.restoreMainMenu()
 		
@@ -93,15 +96,6 @@ class Application(Frame):
 		alertMessage.pack()
 		dismiss = Button(alert, text="Dismiss", command=alert.destroy)
 		dismiss.pack()
-
-	def retreiveData(self):
-		#get data from database
-		return 0
-			
-				
-	def refreshData(self):
-		#TODO reload data from database
-		return 0
 
 	def hideMainMenu(self):
 		self.refreshButton.pack_forget()
@@ -151,9 +145,25 @@ class Application(Frame):
 		self.graphLabel.pack_forget()
 		self.backGraph.pack_forget()
 
+	def retreiveData(self):
+		return 0
 
 
-	
+	def refreshCompanyList(self):
+		tempCompanies = []
+		dict = {'type': 'gui_get_companies'}
+		message = json.dumps(dict)
+		self.socket.send(message)
+		message = self.socket.recv()
+		rcvd = json.loads(message)
+		
+		for r in rcvd:
+			tempCompanies.append(r[0].title())
+		
+		print tempCompanies
+		return tempCompanies
+		
+		
 
 	
 class MaxLengthEntry(Entry):
@@ -168,7 +178,25 @@ class MaxLengthEntry(Entry):
 		return value
 
 
+#def checkNetworkConnection():
+#	try:
+#		connect = urllib2.urlopen('http://www.google.com', timeout=1)
+#		return True
+#	except urllib.URLError as ue:
+#		return False
+
+
 def main():
+
+
+	#connect to server
+	try:
+		context = zmq.Context()
+		socket = context.socket(zmq.REQ)
+		socket.connect("tcp://localhost:5555")
+	except IOException as ioe:
+		print "Could not connect to server"
+		sys.exit(1)
 
 	root = Tk()
 	
@@ -186,7 +214,7 @@ def main():
 	print width
 	print height
 
-	app = Application(root)
+	app = Application(root, socket)
 	root.mainloop()
 
 
