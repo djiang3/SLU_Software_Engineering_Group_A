@@ -30,38 +30,46 @@ class graphanalysis:
     self.xs = pylab.arange(0, len(self.dtarr), 1)
     self.ys = None
 
+    self._sort()
+
   def process_json_stock(self, rcvd):
     # processes json packet of information
     # add a zero element so we can perform array operations
-    self.arr = np.array([0])
-    self.dtarr = np.array([0])
+    arr = []
+    dtarr = []
     # include just the averages
     for row in rcvd:  
       if st.find(row[1], "avg")>0:
-        self.dt     = datetime.strptime(row[1][:10],'%Y-%m-%d')
-        self.dtarr  = np.vstack((self.dtarr, [self.dt]))
-        self.arr    = np.vstack((self.arr, [row[3]]))   # [row[0], row[1], row[2], row[3]]))
+        dt  = datetime.strptime(row[1][:10],'%Y-%m-%d')
+        dtarr.append(dt) #  = np.vstack((self.dtarr, [self.dt]))
+        arr.append(row[3]) #    = np.vstack((self.arr, [row[3]]))   # [row[0], row[1], row[2], row[3]]))
       else:
         pass
-    
-    self.arr = np.delete(self.arr, 0)
-    self.dtarr = np.delete(self.dtarr, 0)
+
+    self.dtarr  = np.vstack(dtarr)
+    self.arr    = np.vstack(arr)
+
+    self.dtarr  = np.delete(self.dtarr, 0)
+    self.arr    = np.delete(self.arr, 0)
+
 
   def process_json_tweet(self, rcvd):
     # process json packet of daily tweet sentiment data
-    self.arr = np.array([0])
-    self.dtarr = np.array([0])
+    arr = []
+    dtarr = []
     #process each row
     for row in rcvd:
-      pprint.pprint(row)
-      avg = float(row[4] - row[5])/row[7] # compute average value
-      self.dt     = datetime.strptime(row[1][:10],'%Y-%m-%d')
-      self.dtarr  = np.vstack((self.dtarr, [self.dt]))
-      self.arr    = np.vstack((self.arr, avg))   # [row[0], row[1], row[2], row[3]]))
       #pprint.pprint(row)
+      avg = float(row[4] - row[5])/row[7] # compute average value
+      dt     = datetime.strptime(row[1][:10],'%Y-%m-%d')
+      dtarr.append(dt)
+      arr.append(avg)      #pprint.pprint(row)
 
-    self.arr = np.delete(self.arr, 0)
+    self.dtarr  = np.vstack(dtarr)
+    self.arr    = np.vstack(arr)
+
     self.dtarr = np.delete(self.dtarr, 0)
+    self.arr = np.delete(self.arr, 0)
 
 
   def interpolate(self, coeffs):
@@ -74,6 +82,25 @@ class graphanalysis:
     self.coeff    = np.polyfit(self.xs, self.arr, coeffs)
     self.polynom  = np.poly1d(self.coeff)
     self.ys       = self.polynom(self.xs)
+
+  def _sort(self):
+    ind = np.argsort(self.dtarr)
+    self.combined_sorted = [ (self.dtarr[i], self.arr[i]) for i in ind]
+    #pprint.pprint(self.combined_sorted)
+
+  def starts_within(self, other):
+    dtarr = self.dtarr.tolist()
+    try:
+      ind = dtarr.index(other.combined_sorted[0][0])
+    except ValueError:
+      return -1
+    return ind
+
+  def correlate(self, other):
+    # use: self.arr, other.arr, and call scipy's correlation function
+    pass
+    #subset = self.arr[62: 62+other.length()]
+    #correlate(subset, other.arr)
 
   def run_plot(self):
     print "debug output first:"
@@ -115,27 +142,32 @@ if __name__ == "__main__":
   print "connecting to server %s" % addr
   socket.connect( addr )
 
-  for stock in tickers:
-    #### bring in stock info
-    # format data package
-    dataset = {'type' : 'stock_pull', 'symbol' : stock, 'clientname' : 'graphanalysis_test'}
-    message = json.dumps(dataset)
-    pprint.pprint(dataset)
+  ############################################
+  ### stock tickers ##########################
+  stock = tickers[0]
+  #for stock in tickers:
+  #### bring in stock info
+  # format data package
+  dataset = {'type' : 'stock_pull', 'symbol' : stock, 'clientname' : 'graphanalysis_test'}
+  message = json.dumps(dataset)
+  pprint.pprint(dataset)
 
-    # send data package
-    print "Requesting data for ticker ", stock, "..."
-    socket.send(message)
+  # send data package
+  print "Requesting data for ticker ", stock, "..."
+  socket.send(message)
 
-    # wait for reply
-    message = socket.recv()
-    print "Received reply for ticker ", stock
+  # wait for reply
+  message = socket.recv()
+  print "Received reply for ticker ", stock
 
-    # decode reply
-    rcvd = json.loads(message)
+  # decode reply
+  rcvd = json.loads(message)
 
-    stk = graphanalysis(rcvd, 'stock')
-    stk.interpolate(10)
-    stk.run_plot()
+  print "DEBUG STUFF"
+
+  stk = graphanalysis(rcvd, 'stock')
+  stk.interpolate(10)
+  stk.run_plot()
 
   for bizname in biznames:
     #### bring in tweet info
@@ -157,6 +189,11 @@ if __name__ == "__main__":
 
     print "new graphanalysis class for tweet"
     twt = graphanalysis(rcvd, 'tweet')
+    print "sort the datapoints so they occur in chronological order"
+    print "stk times within twt?"
+    print twt.starts_within(stk)
+    print "twt times within stk?"
+    print stk.starts_within(twt)
     print "interpolate the graph"
     #twt.interpolate(4)
     print "plot it!"
