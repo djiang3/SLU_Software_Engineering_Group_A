@@ -93,7 +93,7 @@ while True:
         print "recieved query for %s over the date range of %s" % (rcvd['symbol'], rcvd['dateRange'])
         pulled_sentiments = []
         
-        for row in c.execute("SELECT * FROM trendPoints WHERE company = '%s'" % (rcvd['symbol'])):
+        for row in c.execute("SELECT trendID, dateRange, company, averageValue, positive, negative, neutral, dataVolume FROM trendPoints WHERE company = '%s'" % (rcvd['symbol'])):
             #if ((int(row[1][8:10]) == int(rcvd['dateRange'][8:10])) and (int(row[1][0:4]) == int(rcvd['dateRange'][0:4])) and (int(row[1][5:7]) == int(rcvd['dateRange'][5:7]))):
             pulled_sentiments.append(row)
         print "sending %d tweet sentiments to %s" % (len(pulled_sentiments), rcvd['clientname'])

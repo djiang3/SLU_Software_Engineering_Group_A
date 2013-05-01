@@ -53,9 +53,11 @@ class graphanalysis:
     self.dtarr = np.array([0])
     #process each row
     for row in rcvd:
+      pprint.pprint(row)
+      avg = float(row[4] - row[5])/row[7] # compute average value
       self.dt     = datetime.strptime(row[1][:10],'%Y-%m-%d')
       self.dtarr  = np.vstack((self.dtarr, [self.dt]))
-      self.arr    = np.vstack((self.arr, [row[3]]))   # [row[0], row[1], row[2], row[3]]))
+      self.arr    = np.vstack((self.arr, avg))   # [row[0], row[1], row[2], row[3]]))
       #pprint.pprint(row)
 
     self.arr = np.delete(self.arr, 0)
