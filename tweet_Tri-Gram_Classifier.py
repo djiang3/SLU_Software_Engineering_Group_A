@@ -30,7 +30,7 @@ neuTrigrams = ""
 negTrigrams = ""
 
 for _dict in tweetRawData:
-    if (tweetCounter < 500):
+    if (tweetCounter < 0): #setting to zero so that all tweets will be placed in the training CFD
         testSentimentDict[_dict['id']] = _dict['sentiment']
         testTextDict[_dict['id']] = _dict['text']
         # ^^^ unigram
