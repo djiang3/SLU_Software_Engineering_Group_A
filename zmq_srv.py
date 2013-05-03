@@ -83,6 +83,7 @@ while True:
     elif rcvd['type'] == 'avgSentiment_push':
         pprint.pprint(rcvd)
         print "recieved push request for %s avgerage sentiment on %s" % (rcvd['company'], rcvd['dateRange'])
+	c.execute("DELETE FROM trendPoints WHERE dateRange = '%s'" % (rcvd['dateRange']))
         c.execute("INSERT INTO trendPoints VALUES(NULL, '%s', '%s', '%d', '%d', '%d', '%d', '%d')" % (rcvd['dateRange'], rcvd['company'], rcvd['averageValue'], rcvd['positive'], rcvd['negative'], rcvd['neutral'], rcvd['dataVolume']))
         #'rcvd['dataType'],  rcvd['sentiment'], rcvd['volume']))
         sdb.conn.commit()
