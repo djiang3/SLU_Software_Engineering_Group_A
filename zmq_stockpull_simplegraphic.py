@@ -52,7 +52,7 @@ if __name__ == "__main__":
 
     # print retreived st5ocks
     rcvd = json.loads(message)    
-    #pprint.pprint(rcvd)
+    pprint.pprint(rcvd)
 
     arr = np.array([0])
     dtarr = np.array([0])
@@ -113,12 +113,7 @@ if __name__ == "__main__":
     pylab.ylabel('y')
     pylab.xlabel('x')
 
-    print "polynomial coefficents are: ", coeff
+    print "coefficents are: ", coeff
 
-    ## calculate correlation coeff
-    data = np.array([arr, ys])
-    ccoeff = np.corrcoef(data)
-    
-    print "correlation coeff are: ", ccoeff
     #pylab.plot(arr)
     pylab.show()
