@@ -1,4 +1,3 @@
-
 from Tkinter import *
 from PIL import Image, ImageTk
 import re
@@ -17,11 +16,12 @@ ALERT_NO_SERVER_CONNECTION = 2
 ALERT_FAILED_SENTIMENT_ANALYZER = 3
 ALERT_FAILED_GET_TWEETS = 4
 ALERT_FAILED_FINANCE_INFO = 5
+ALERT_DATE_RANGE_ERROR = 6
 
 MAX_LENGTH_COMPANY_NAME = 32
 
 ALERT_ARRAY = ["Invalid Input", "No Network Connection", "Server Problems", \
-		"Sentiment Analyzer Failure", "Aaron's Fault...", "Floundering Financials"]
+		"Sentiment Analyzer Failure", "Aaron's Fault...", "Floundering Financials", "Invalid Date Range"]
 
 
 class Application(Frame):
@@ -31,6 +31,7 @@ class Application(Frame):
 		self.parent = parent
 		self.companies = []
 		self.socket = socket
+		self.previousSelectedCompany = ""
 
 		self.parent.title("GoldMine")		
 
@@ -43,11 +44,25 @@ class Application(Frame):
 		#self.enterNameMax = MaxLengthEntry(self.parent, maxLength=MAX_LENGTH_COMPANY_NAME)
 		#self.enterNameMax.pack()
 
-		self.listCompanies = self.refreshCompanyList()
-		self.listVariable = StringVar()
-		self.listVariable.set(self.listCompanies[0])
-		self.companyDrop = OptionMenu(self.parent, self.listVariable, *self.listCompanies)
+		companies = self.refreshCompanyList()
+		self.listCompanies = companies
+		self.listVariableCompany = StringVar()
+		self.listVariableCompany.set(self.listCompanies[0])
+		self.companyDrop = OptionMenu(self.parent, self.listVariableCompany, *self.listCompanies)
 		self.companyDrop.pack()
+
+		startDates = self.refreshDateList()
+		self.listStartDates = startDates
+		self.listVariableStartDate = StringVar()
+		self.listVariableStartDate.set(self.listStartDates[0])
+		self.startDateDrop = OptionMenu(self.parent, self.listVariableStartDate, *self.listStartDates)
+		self.startDateDrop.pack()
+
+		self.listEndDates = startDates
+		self.listVariableEndDate = StringVar()
+		self.listVariableEndDate.set(self.listEndDates[0])
+		self.endDateDrop = OptionMenu(self.parent, self.listVariableEndDate, *self.listEndDates)
+		self.endDateDrop.pack()		
 
 		self.addButton = Button(self.parent, text="+", command=self.addCompany)
 		self.addButton.pack()
@@ -61,10 +76,27 @@ class Application(Frame):
 		
 
 	def addCompany(self):
-		company = self.listVariable.get()
-		newCompany = ""
+		company = self.listVariableCompany.get()
+		startDate = self.listVariableStartDate.get()
+		endDate = self.listVariableEndDate.get()
+
+		startYear = int(startDate[0:4])
+		endYear = int(endDate[0:4])
+		startMonth = int(startDate[5:7])
+		endMonth = int(endDate[5:7])
+		startDay = int(startDate[8:10])
+		endDay = int(endDate[8:10])
+
 		if(company != ""):
-			self.companyListBox.insert(END, company)
+			if(endYear < startYear):
+				self.showAlertDialogue(ALERT_DATE_RANGE_ERROR)
+			elif(endMonth < startMonth):
+				self.showAlertDialogue(ALERT_DATE_RANGE_ERROR)
+			elif(endDay < startDay):
+				self.showAlertDialogue(ALERT_DATE_RANGE_ERROR)
+			else:
+				self.companyListBox.insert(END, company)
+
 
 	#use to poulate list
 	def parseInputForPresentation(self, input):
@@ -72,6 +104,7 @@ class Application(Frame):
 		input = input.title()
 
 		return input
+
 		
 	#use for refresh
 	def parseInputForGetTweets(self, input):
@@ -97,6 +130,7 @@ class Application(Frame):
 		dismiss = Button(alert, text="Dismiss", command=alert.destroy)
 		dismiss.pack()
 
+
 	def hideMainMenu(self):
 		self.refreshButton.pack_forget()
 		self.companyListBox.pack_forget()
@@ -106,12 +140,14 @@ class Application(Frame):
 		self.refreshButton.pack_forget()
 		self.topLabel.pack_forget()
 
+
 	def hideSentimentMenu(self):
 		self.label1.pack_forget()
 		self.label2.pack_forget()
 		self.graph1.pack_forget()
 		self.graph2.pack_forget()
 		self.backSentiment.pack_forget()
+
 
 	def restoreMainMenu(self):
 		self.hideSentimentMenu()
@@ -123,6 +159,7 @@ class Application(Frame):
 		self.searchButton.pack()
 		self.refreshButton.pack()
 
+
 	def showGraph(self):
 		self.hideSentimentMenu()
 
@@ -130,6 +167,7 @@ class Application(Frame):
 		self.graphLabel.pack(expand=1)
 		self.backGraph = Button(self.parent, text="Back", command=self.restoreSentiment)
 		self.backGraph.pack(side=BOTTOM)
+
 
 	def restoreSentiment(self):
 		self.hideGraph()
@@ -145,23 +183,57 @@ class Application(Frame):
 		self.graphLabel.pack_forget()
 		self.backGraph.pack_forget()
 
+
 	def retreiveData(self):
 		return 0
 
 
 	def refreshCompanyList(self):
-		tempCompanies = []
 		dict = {'type': 'gui_get_companies'}
-		message = json.dumps(dict)
+		list = self.refreshListFromDB(dict)
+
+		return list
+
+
+	def refreshDateList(self):
+		company = self.listVariableCompany.get().lower()
+		dict = {'type': 'gui_get_dates', 'company': company}
+		list = self.refreshListFromDB(dict)
+
+		return list
+
+
+	def refreshListFromDB(self, messageDict):
+		tempData = []
+		message = json.dumps(messageDict)
 		self.socket.send(message)
 		message = self.socket.recv()
 		rcvd = json.loads(message)
-		
 		for r in rcvd:
-			tempCompanies.append(r[0].title())
-		
-		print tempCompanies
-		return tempCompanies
+			tempData.append(r.title())
+
+		return tempData
+
+
+	#involved in listener hack, otherwise not useful
+	#----------------------------------------------
+
+	def onCompanySelect(self):
+		currentCompany = self.listVariableCompany.get()
+		print currentCompany
+		if(self.previousSelectedCompany != currentCompany):
+			newDates = self.refreshDateList()
+			self.listStartDates = newDates
+			self.listEndDates = newDates
+
+			self.startDateDrop = OptionMenu(self.parent, self.listVariableStartDate, *self.listStartDates)
+			self.endDateDrop = OptionMenu(self.parent, self.listVariableEndDate, *self.listEndDates)
+			self.previousSelectedCompany = currentCompany
+
+			print self.listStartDates
+		self.parent.after(250, self.onCompanySelect)
+
+
 		
 		
 
@@ -177,13 +249,6 @@ class MaxLengthEntry(Entry):
 			value = value[:self.maxLength]
 		return value
 
-
-#def checkNetworkConnection():
-#	try:
-#		connect = urllib2.urlopen('http://www.google.com', timeout=1)
-#		return True
-#	except urllib.URLError as ue:
-#		return False
 
 
 def main():
@@ -211,10 +276,9 @@ def main():
 
 	root.geometry('%dx%d+0+0' % (width, height))
 
-	print width
-	print height
-
 	app = Application(root, socket)
+
+	root.after(250, app.onCompanySelect)
 	root.mainloop()
 
 

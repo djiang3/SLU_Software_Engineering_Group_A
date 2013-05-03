@@ -110,7 +110,7 @@ while True:
 	companyList = []
 	
 	for row in c.execute("select distinct company from tweets"):
-		companyList.append(row)
+		companyList.append(row[0])
 
         message = json.dumps(companyList)
         socket.send(message)
@@ -121,8 +121,12 @@ while True:
 	print "received query for list of dates"
 	companyDates = []
 
-	for row in c.execute("select date from tweets where company = '%s'" % (rcvd['company'])):
-		companyDates.append(row)
+	previouslyUsed = []
+	for row in c.execute("select distinct timestamp from tweets where company = '%s'" % (rcvd['company'])):
+		if(row[0][0:10] not in previouslyUsed):
+			companyDates.append(row[0][0:10])
+			previouslyUsed.append(row[0][0:10])
+			print row[0][0:10]
 
 	message = json.dumps(companyDates)
 	socket.send(message)
