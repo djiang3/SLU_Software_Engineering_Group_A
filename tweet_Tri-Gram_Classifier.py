@@ -87,12 +87,21 @@ posTrigramList = posTrigrams.split()
 negTrigramList = negTrigrams.split()
 neuTrigramList = neuTrigrams.split()
 
+# Using naive 'Information Gain' technique, to improve quality of CFD by removing N-grams of similiar frequency
+discardThreshold = 300;
+
 for trigram in posTrigramList:
-    if (posTrigramList.count(trigram) > 0): posTrigramListX.append(trigram)
+    calc1 = (posTrigramList.count(trigram) * posRatio) / ((neuTrigramList.count(trigram) * neuRatio) + 0.0001)
+    calc2 = (posTrigramList.count(trigram) * posRatio) / ((negTrigramList.count(trigram) * negRatio) + 0.0001)
+    if ( (discardThreshold < calc1 or calc1 < (1/discardThreshold)) or (discardThreshold < calc2 or calc2 < (1/discardThreshold))): posTrigramListX.append(trigram)
 for trigram in negTrigramList:
-    if (negTrigramList.count(trigram) > 0): negTrigramListX.append(trigram)
+    calc1 = ((negTrigramList.count(trigram) * negRatio) + 0.0001) / ((posTrigramList.count(trigram) * posRatio) + 0.0001)
+    calc2 = ((negTrigramList.count(trigram) * negRatio) + 0.0001)/ ((neuTrigramList.count(trigram) * neuRatio) + 0.0001)
+    if ( (discardThreshold < calc1 or calc1 < (1/discardThreshold)) or (discardThreshold < calc2 or calc2 < (1/discardThreshold))): negTrigramListX.append(trigram)    
 for trigram in neuTrigramList:
-    if (neuTrigramList.count(trigram) > 0): neuTrigramListX.append(trigram)
+    calc1 = ((neuTrigramList.count(trigram) * neuRatio) + 0.0001) / ((negTrigramList.count(trigram) * negRatio) + 0.0001)
+    calc2 = ((neuTrigramList.count(trigram) * neuRatio) + 0.0001) / ((posTrigramList.count(trigram) * posRatio) + 0.0001)
+    if ( (discardThreshold < calc1 or calc1 < (1/discardThreshold)) or (discardThreshold < calc2 or calc2 < (1/discardThreshold))): neuTrigramListX.append(trigram)
     
 
 for trigram in posTrigramListX:
@@ -101,11 +110,6 @@ for trigram in negTrigramListX:
     negTrigramsX += " " + trigram
 for trigram in neuTrigramListX:
     neuTrigramsX += " " + trigram
-
-trainDict = dict()
-trainDict['positive'] = posTrigrams
-trainDict['negative'] = negTrigrams
-trainDict['neutral'] = neuTrigrams
 
 trainDictX = dict()
 trainDictX['positive'] = posTrigramsX
@@ -119,15 +123,15 @@ trainCFD = nltk.ConditionalFreqDist(
 
 
 
-actualScoreList = []
-testScoreList = []
+#actualScoreList = []
+#testScoreList = []
 
-print "Analyzing %d total tri-grams." % trainCFD.N()
-print "There are %d postively rated trigrams." % trainCFD['positive'].N()
-print "There are %d negatively rated trigrams." % trainCFD['negative'].N()
-print "There are %d neutrally rated trigrams." % trainCFD['neutral'].N()
-
-print trainCFD.keys()
+#Print statements to analyze contents of the training CFD
+#print "Analyzing %d total tri-grams." % trainCFD.N()
+#print "There are %d postively rated trigrams." % trainCFD['positive'].N()
+#print "There are %d negatively rated trigrams." % trainCFD['negative'].N()
+#print "There are %d neutrally rated trigrams." % trainCFD['neutral'].N()
+#print trainCFD.keys()
 
 # Create a port for recieving data on port 5556 (for get_tweets.py) 
 contextIN = zmq.Context()
@@ -187,24 +191,15 @@ while True:
 
     socketIN.send("Ack")
 
-i = 0
+#Analzying results for testing the Classifier
+#cm = ConfusionMatrix(testScoreList, actualScoreList)
+#print cm
 
-for tweetID in testList:
-    if (testScoreList[i] != actualScoreList[i]):
-        print actualScoreList[i] + " : " + testScoreList[i] + "    " + testTextDict[tweetID]
-        print i
-    i += 1
+#score = 0
+#for i in range(len(actualScoreList)):
+ #   if (testScoreList[i] == actualScoreList[i]):
+  #      score += 1
+#overallScore = (score/len(testScoreList)) * 100
 
-print len(testScoreList)
-print len(actualScoreList)
-cm = ConfusionMatrix(testScoreList, actualScoreList)
-print cm
-
-score = 0
-for i in range(len(actualScoreList)):
-    if (testScoreList[i] == actualScoreList[i]):
-        score += 1
-overallScore = (score/len(testScoreList)) * 100
-
-print "Overall accuracy is ", overallScore, "%."
+#print "Overall accuracy is ", overallScore, "%."
 
