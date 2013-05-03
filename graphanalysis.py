@@ -96,13 +96,36 @@ class graphanalysis:
       return -1
     return ind
 
+  def length(self):
+    return self.xs.size
+
   def correlate(self, other):
     # use: self.arr, other.arr, and call scipy's correlation function
     pass
     #subset = self.arr[62: 62+other.length()]
     #correlate(subset, other.arr)
 
-  def run_plot(self):
+  def save_plot(self, filename, plot_len=0, plot_start=0):
+    if plot_len > 0:
+      pylab.plot_date(self.dtarr[plot_start:plot_len+plot_start], self.ys[plot_start:plot_len+plot_start], 'o')
+    else:
+      pylab.plot_date(self.dtarr, self.arr, 'o')
+
+    if self.ys is None:
+      pass
+    else:
+      # was:  pylab.plot_date(self.dtarr, self.ys, '-')
+      if plot_len > 0:
+        pylab.plot_date(self.dtarr[plot_start:plot_len+plot_start], self.ys[plot_start:plot_len+plot_start], '-')
+      else:
+        pylab.plot_date(self.dtarr, self.ys, '-')
+
+    pylab.ylabel('y')
+    pylab.xlabel('x')
+
+    pylab.savefig(filename)
+
+  def run_plot(self, plot_len=0, plot_start=0):
     print "debug output first:"
     print "*** dtarr: "
     print self.dtarr
@@ -110,14 +133,21 @@ class graphanalysis:
     print self.arr
     
     print "plotting raw datapoints"
-    pylab.plot_date(self.dtarr, self.arr, 'o')
+    # was:   pylab.plot_date(self.dtarr, self.arr, 'o')
+    if plot_len > 0:
+      pylab.plot_date(self.dtarr[plot_start:plot_len+plot_start], self.ys[plot_start:plot_len+plot_start], 'o')
+    else:
+      pylab.plot_date(self.dtarr, self.arr, 'o')
 
     # have we interpolated recently?
     if self.ys is None:
       pass
     else:
       print "plotting interpolated datapoints"
-      pylab.plot_date(self.dtarr, self.ys, '-')
+      if plot_len > 0:
+        pylab.plot_date(self.dtarr[plot_start:plot_len+plot_start], self.ys[plot_start:plot_len+plot_start], '-')
+      else:
+        pylab.plot_date(self.dtarr, self.ys, '-')
 
     pylab.ylabel('y')
     pylab.xlabel('x')
@@ -142,8 +172,8 @@ if __name__ == "__main__":
   print "connecting to server %s" % addr
   socket.connect( addr )
 
-  ############################################
-  ### stock tickers ##########################
+  ############################################################# 
+  ### stock tickers ###########################################
   stock = tickers[0]
   #for stock in tickers:
   #### bring in stock info
@@ -163,38 +193,41 @@ if __name__ == "__main__":
   # decode reply
   rcvd = json.loads(message)
 
-  print "DEBUG STUFF"
-
   stk = graphanalysis(rcvd, 'stock')
   stk.interpolate(10)
   stk.run_plot()
 
-  for bizname in biznames:
-    #### bring in tweet info
-    # format data package
-    dataset = {'type' : 'avgSentiment_pull', 'symbol' : bizname, 'dateRange' : '', 'clientname' : 'graphanalysis_test'}
-    message = json.dumps(dataset)
-    pprint.pprint(dataset)
+  ############################################################# 
+  #### bring in tweet info ####################################
+  bizname = biznames[0] #for bizname in biznames:
+  
+  # format data package
+  dataset = {'type' : 'avgSentiment_pull', 'symbol' : bizname, 'dateRange' : '', 'clientname' : 'graphanalysis_test'}
+  message = json.dumps(dataset)
+  pprint.pprint(dataset)
+  # send data package
+  print "Requesting data for ticker ", bizname, "..."
+  socket.send(message)
 
-    # send data package
-    print "Requesting data for ticker ", bizname, "..."
-    socket.send(message)
+  # wait for reply
+  message = socket.recv()
+  print "Received reply for ticker ", bizname
 
-    # wait for reply
-    message = socket.recv()
-    print "Received reply for ticker ", bizname
+  # decode reply
+  rcvd = json.loads(message)
 
-    # decode reply
-    rcvd = json.loads(message)
+  print "new graphanalysis class for tweet"
+  twt = graphanalysis(rcvd, 'tweet')
+  print "sort the datapoints so they occur in chronological order"
+  print "stk times within twt?"
+  print twt.starts_within(stk)
+  print "twt times within stk?"
+  print stk.starts_within(twt)
+  print "interpolate the graph"
+  #twt.interpolate(10)
+  print "plot it!"
+  twt.run_plot()
 
-    print "new graphanalysis class for tweet"
-    twt = graphanalysis(rcvd, 'tweet')
-    print "sort the datapoints so they occur in chronological order"
-    print "stk times within twt?"
-    print twt.starts_within(stk)
-    print "twt times within stk?"
-    print stk.starts_within(twt)
-    print "interpolate the graph"
-    #twt.interpolate(4)
-    print "plot it!"
-    twt.run_plot()
+  stk.run_plot(twt.length(), stk.starts_within(twt))
+
+
