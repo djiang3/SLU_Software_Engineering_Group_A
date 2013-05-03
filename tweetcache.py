@@ -12,11 +12,15 @@ import zmq
 S_ID='id_str'
 S_RESULTS='results'
 S_TWEET_QUERY = "http://search.twitter.com/search.json?q="
+S_NEXT_PAGE_QUERY="http://search.twitter.com/search.json"
 S_RESULTS_PER_PAGE="&rpp=100"
 S_SINCE_ID="&since_id="
+S_MAX_ID="&max_id="
+S_PAGE_NUM="&page="
 
 #numeric constants
 N_RESULTS_PER_PAGE=100
+N_INITIAL_PAGE_GRAB=25
 
 
 class WeightedTweet:
@@ -69,18 +73,14 @@ class TweetCacheError(Exception):
 
 
 class TweetCache:
-	def __init__(self, api, companies, sinceID="0", positiveTerms=None, negativeTerms=None, financialTerms=None, weightedTweets=[], creationTime=0, tweetCountTotal=0):
+	def __init__(self, api, companies, sinceID="0", weightedTweets=[], creationTime=0, tweetCountTotal=0):
 		self.api = api
 		self.companies = companies
 		self.sinceID = sinceID
-		self.positiveTerms = positiveTerms
-		self.negativeTerms = negativeTerms
-		self.financialTerms = financialTerms
 		self.weightedTweets = weightedTweets
 		self.creationTime = creationTime
 		self.tweetCountTotal = tweetCountTotal
-
-		self.initializeCache()
+		self.initialized = False
 
 
 	def initializeCache(self):
@@ -90,60 +90,59 @@ class TweetCache:
 		if(isinstance(self.sinceID, str) == False):
 			raise TweetCacheError("SinceID must be a string")
 			sys.exit(1)
+
+
+		#get 25 pages for each company
+		#if not 25 pages break
+		tweets = []
+
+                for c in self.companies:
+			#get first page
+			query=self.generateQuery(c)
+			for p in range(N_INITIAL_PAGE_GRAB):
+				print query
+        	                search = urllib.urlopen(query)
+				tweets = json.loads(search.read())
+				try:
+					for pt in tweets[S_RESULTS]:
+						self.weightedTweets.append(WeightedTweet(pt, c))
+				except KeyError:
+					raise TweetCacheError("End of New Tweets")
+				try:
+					query=S_NEXT_PAGE_QUERY+tweets["next_page"]
+				except KeyError:
+					break
+
+		if(len(self.weightedTweets) > 0):
+                	self.sinceID = self.weightedTweets[0].asDict()[S_ID]
+
+		self.initialized=True
+		
+		
 				
 	def updateCache(self):
 
                 #get tweets relating to companies
 		self.clearCache()
 
-		positiveTweets = []
-		negativeTweets = []
-		financialTweets = []
+		tweets = []
 
                 for c in self.companies:
-			if(self.positiveTerms):
-				#not O(n^3) because of limited search terms
-				#can be improved if needed
-				for i in self.positiveTerms:
-					query = self.generateQuery(c,i)
-                               		positiveSearch = urllib.urlopen(query)
-					positiveTweets = json.loads(positiveSearch.read())
-					try:
-						for pt in positiveTweets[S_RESULTS]:
-							self.weightedTweets.append(WeightedTweet(pt, c))
-					except KeyError:
-						raise TweetCacheError("Could not find any positive tweets")
-					#else:
-					#	raise TweetCacheError("End of positive tweets")
+			query = self.generateQuery(c)
+                        search = urllib.urlopen(query)
+			tweets = json.loads(search.read())
+			try:
+				for pt in tweets[S_RESULTS]:
+					self.weightedTweets.append(WeightedTweet(pt, c))
+			except KeyError:
+				raise TweetCacheError("End of New Tweets")
 	
-			if(self.negativeTerms):
-				for i in self.negativeTerms:
-					query = self.generateQuery(c,i)
-					negativeSearch = urllib.urlopen(query)
-					negativeTweets = json.loads(negativeSearch.read())
-					try:
-						for nt in negativeTweets[S_RESULTS]:
-							self.weightedTweets.append(WeightedTweet(nt, c))
-					except KeyError:
-						raise TweetCacheError("Could not find any negative tweets")
-
-			if(self.financialTerms):
-				for i in self.financialTerms:
-					query = self.generateQuery(c,i)
-					financialSearch = urllib.urlopen(query)
-					financialTweets = json.loads(financialSearch.read())
-					try:
-						for ft in financialTweets[S_RESULTS]:
-							self.weightedTweets.append(WeightedTweet(ft, c))
-					except KeyError:
-						raise TweetCacheError("Could not find any financial tweets")
 
                 #update sinceID to latest tweet
 		if(len(self.weightedTweets) > 0):
                 	self.sinceID = self.weightedTweets[0].asDict()[S_ID]
 
-			#print self.sinceID
-			#print self.weightedTweets[0].asDict()[S_ID]
+		self.initialized=True
 
 
 	def getTweetsAsDicts(self):
@@ -160,6 +159,12 @@ class TweetCache:
 			return self.weightedTweets
 		else:
 			raise TweetCacheError("No new tweets found")
+
+	def isInitialized(self):
+		return self.initialized
+
+	def setInitialized(self, init):
+		self.initialized = init
 
 	def sendToServer(self, context, tweetDict):
 		#try:
@@ -178,8 +183,10 @@ class TweetCache:
 	def getSinceID(self):
 		return self.sinceID
 
-	def generateQuery(self, c, t):
-		return S_TWEET_QUERY+c+'+'+t+S_RESULTS_PER_PAGE+S_SINCE_ID+self.sinceID
+	def generateQuery(self, c, maxID=0, i=0):
+		if(maxID == 0):
+			return S_TWEET_QUERY+c+S_RESULTS_PER_PAGE+S_SINCE_ID+self.sinceID
+		return S_TWEET_QUERY+c+S_RESULTS_PER_PAGE+S_MAX_ID+self.maxID+S_PAGE_NUM+i
 
 	#number of tweets currently in cache
 	def getTweetCount(self):
@@ -188,20 +195,14 @@ class TweetCache:
 	def getCompanies(self):
 		return self.companies
 
+	def addCompanies(self, company):
+		self.companies.append(company)
+
 	#number of tweets that gone through cache
 	def getTweetCountTotal(self):
 		if(self.tweetCountTotal == 0):
 			return len(self.weightedTweets)
 		return self.tweetCountTotal
-
-	def getPositiveTerms(self):
-		return self.positiveTerms
-
-	def getNegativeTerms(self):
-		return self.negativeTerms
-
-	def getFinancialTerms(self):
-		return self.financialTerms
 
 	def clearCache(self):
 		self.tweetCountTotal = self.tweetCountTotal + len(self.weightedTweets)

@@ -39,6 +39,7 @@ average = 0
 positive = 0
 neutral = 0
 negative = 0
+score = 0
 
 for row in rcvd:
       if (row[3] == 'pos'):

@@ -138,6 +138,7 @@ def main():
             if (rcvd['type'] == "tweet_stop"):
                 print "Recieved tweet_stop."
                 print "Shutting down..."
+		socketIN.send("Ack")
                 
                 sys.exit()
 
@@ -160,9 +161,9 @@ for files in os.listdir("."):
         message = socket.recv()
 """
 
-
+"""
 if __name__ == '__main__':
     main()
-
+"""
 
 
