@@ -105,7 +105,7 @@ class graphanalysis:
     #subset = self.arr[62: 62+other.length()]
     #correlate(subset, other.arr)
 
-  def gen_plot(self, filename, plot_len=0, plot_start=0):
+  def save_plot(self, filename, plot_len=0, plot_start=0):
     if plot_len > 0:
       pylab.plot_date(self.dtarr[plot_start:plot_len+plot_start], self.ys[plot_start:plot_len+plot_start], 'o')
     else:
