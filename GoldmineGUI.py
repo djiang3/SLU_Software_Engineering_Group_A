@@ -33,10 +33,23 @@ class Application(Frame):
 		self.socket = socket
 		self.previousSelectedCompany = ""
 
+		self.companiesAdded = []
+		self.startDatesAdded = []
+		self.endDatesAdded = []
+
+		self.tweetInfoDict = {}
+		self.stockInfoDict = {}
+
 		self.parent.title("GoldMine")		
 
 		self.companyListBox = Listbox(self.parent)
 		self.companyListBox.pack(expand=1)
+		
+		self.startDateListBox = Listbox(self.parent)
+		self.startDateListBox.pack(expand=1)
+
+		self.endDateListBox = Listbox(self.parent)
+		self.endDateListBox.pack(expand=1)
 
 		self.topLabel = Label(self.parent, text="Please Choose a Company From the List:")
 		self.topLabel.pack()
@@ -67,8 +80,8 @@ class Application(Frame):
 		self.addButton = Button(self.parent, text="+", command=self.addCompany)
 		self.addButton.pack()
 
-		self.searchButton = Button(self.parent, text="Get My Data", command=self.retreiveData)
-		self.searchButton.pack()
+		self.retrieveDataButton = Button(self.parent, text="Get My Data", command=self.retrieveData)
+		self.retrieveDataButton.pack()
 
 		self.refreshButton = Button(self.parent, text="Refresh Company List", command=self.refreshCompanyList)
 		self.refreshButton.pack()
@@ -87,7 +100,7 @@ class Application(Frame):
 		startDay = int(startDate[8:10])
 		endDay = int(endDate[8:10])
 
-		if(company != ""):
+		if(company != "" and company not in self.companiesAdded):
 			if(endYear < startYear):
 				self.showAlertDialogue(ALERT_DATE_RANGE_ERROR)
 			elif(endMonth < startMonth):
@@ -96,6 +109,11 @@ class Application(Frame):
 				self.showAlertDialogue(ALERT_DATE_RANGE_ERROR)
 			else:
 				self.companyListBox.insert(END, company)
+				self.companiesAdded.append(company)
+				self.startDateListBox.insert(END, startDate)
+				self.startDatesAdded.append(startDate)
+				self.endDateListBox.insert(END, endDate)
+				self.endDatesAdded.append(endDate)
 
 
 	#use to poulate list
@@ -136,7 +154,7 @@ class Application(Frame):
 		self.companyListBox.pack_forget()
 		self.enterNameMax.pack_forget()
 		self.addButton.pack_forget()
-		self.searchButton.pack_forget()
+		self.retrieveDataButton.pack_forget()
 		self.refreshButton.pack_forget()
 		self.topLabel.pack_forget()
 
@@ -153,10 +171,12 @@ class Application(Frame):
 		self.hideSentimentMenu()
 
 		self.companyListBox.pack(expand=1)
+		self.startDateListBox.pack(expand=1)
+		self.endDateListBox.pack(expand=1)
 		self.topLabel.pack()
 		self.enterNameMax.pack()
 		self.addButton.pack()
-		self.searchButton.pack()
+		self.retrieveDataButton.pack()
 		self.refreshButton.pack()
 
 
@@ -184,8 +204,19 @@ class Application(Frame):
 		self.backGraph.pack_forget()
 
 
-	def retreiveData(self):
+	def retrieveData(self):
+		tempData = []
+
+		messageDict = {'type':'gui_tweet_pull', 'companies':self.companiesAdded, 'start_dates':self.startDatesAdded, 'end_dates':self.endDatesAdded}
+		message = json.dumps(messageDict)
+		self.socket.send(message)
+		message = self.socket.recv()
+		rcvd = json.loads(message)
+		for r in rcvd:
+			print r
+
 		return 0
+		
 
 
 	def refreshCompanyList(self):
@@ -215,22 +246,24 @@ class Application(Frame):
 		return tempData
 
 
-	#involved in listener hack, otherwise not useful
-	#----------------------------------------------
-
 	def onCompanySelect(self):
 		currentCompany = self.listVariableCompany.get()
-		print currentCompany
 		if(self.previousSelectedCompany != currentCompany):
 			newDates = self.refreshDateList()
-			self.listStartDates = newDates
-			self.listEndDates = newDates
+			sMenu = self.startDateDrop['menu']
+			sMenu.delete(0, END)
+			eMenu = self.endDateDrop['menu']
+			eMenu.delete(0, END)
 
-			self.startDateDrop = OptionMenu(self.parent, self.listVariableStartDate, *self.listStartDates)
-			self.endDateDrop = OptionMenu(self.parent, self.listVariableEndDate, *self.listEndDates)
+			for nd in newDates:
+				sMenu.add_command(label=nd, command=lambda v=self.listVariableStartDate, l=nd: v.set(l))
+				eMenu.add_command(label=nd, command=lambda v=self.listVariableEndDate, l=nd: v.set(l))
+			
+			self.listVariableStartDate.set(newDates[0])
+			self.listVariableEndDate.set(newDates[0])
+
 			self.previousSelectedCompany = currentCompany
 
-			print self.listStartDates
 		self.parent.after(250, self.onCompanySelect)
 
 
