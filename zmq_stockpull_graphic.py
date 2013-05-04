@@ -49,7 +49,8 @@ if __name__ == "__main__":
 
     # print retreived st5ocks
     rcvd = json.loads(message)    
-    #pprint.pprint(rcvd)
+    print "Message received: "
+    pprint.pprint(rcvd)
 
     arr = np.array([0,0,0,0])
 

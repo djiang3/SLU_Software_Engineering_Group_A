@@ -253,10 +253,13 @@ def main():
                 socketEXIT.connect("tcp://localhost:5554")
                 exit = 1
                 socketEXIT.send("Ack")
-
+                
                 print "\nStopping Sentiment Analyzer"
-                stopDict = {'type':"tweet_stop"}
-                cache.sendToServer(context, stopDict)
+                stop_struct = []
+                stop_dict = {'type':"tweet_stop"}
+                stop_struct.append(stop_dict)
+
+                cache.sendToServer(context, stop_struct)
 			
                 exit(1)
 		

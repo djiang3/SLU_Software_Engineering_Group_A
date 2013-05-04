@@ -83,6 +83,7 @@ while True:
     elif rcvd['type'] == 'avgSentiment_push':
         pprint.pprint(rcvd)
         print "recieved push request for %s avgerage sentiment on %s" % (rcvd['company'], rcvd['dateRange'])
+	c.execute("DELETE FROM trendPoints WHERE dateRange = '%s'" % (rcvd['dateRange']))
         c.execute("INSERT INTO trendPoints VALUES(NULL, '%s', '%s', '%d', '%d', '%d', '%d', '%d')" % (rcvd['dateRange'], rcvd['company'], rcvd['averageValue'], rcvd['positive'], rcvd['negative'], rcvd['neutral'], rcvd['dataVolume']))
         #'rcvd['dataType'],  rcvd['sentiment'], rcvd['volume']))
         sdb.conn.commit()
@@ -93,7 +94,7 @@ while True:
         print "recieved query for %s over the date range of %s" % (rcvd['symbol'], rcvd['dateRange'])
         pulled_sentiments = []
         
-        for row in c.execute("SELECT * FROM trendPoints WHERE company = '%s'" % (rcvd['symbol'])):
+        for row in c.execute("SELECT trendID, dateRange, company, averageValue, positive, negative, neutral, dataVolume FROM trendPoints WHERE company = '%s'" % (rcvd['symbol'])):
             #if ((int(row[1][8:10]) == int(rcvd['dateRange'][8:10])) and (int(row[1][0:4]) == int(rcvd['dateRange'][0:4])) and (int(row[1][5:7]) == int(rcvd['dateRange'][5:7]))):
             pulled_sentiments.append(row)
         print "sending %d tweet sentiments to %s" % (len(pulled_sentiments), rcvd['clientname'])

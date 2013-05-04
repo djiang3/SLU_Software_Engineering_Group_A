@@ -63,6 +63,6 @@ if __name__ == "__main__":
       else:
         arr = np.vstack((arr, [row[0], row[1], row[2], row[3]]))
       """
-    print arr[-30:]
+    print arr[-90:]
 
 
