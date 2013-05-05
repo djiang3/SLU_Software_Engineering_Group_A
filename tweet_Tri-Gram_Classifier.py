@@ -87,7 +87,7 @@ neuTrigramsX = ""
 posTrigramList = posTrigrams.split()
 negTrigramList = negTrigrams.split()
 neuTrigramList = neuTrigrams.split()
-allTrigramsList = allTrigrams.split()
+allTrigramList = allTrigrams.split()
 
 #Calculate ratios of classifications in raw training data
 
