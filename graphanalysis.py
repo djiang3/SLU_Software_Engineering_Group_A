@@ -89,12 +89,7 @@ class graphanalysis:
     #pprint.pprint(self.combined_sorted)
 
   def starts_within(self, other):
-    dtarr = self.dtarr.tolist()
-    try:
-      ind = dtarr.index(other.combined_sorted[0][0])
-    except ValueError:
-      return -1
-    return ind
+    return self.get_date_loc(other.combined_sorted[0][0])
 
   def length(self):
     return self.xs.size
@@ -105,39 +100,58 @@ class graphanalysis:
     #subset = self.arr[62: 62+other.length()]
     #correlate(subset, other.arr)
 
+  def get_date_loc(self, findme):
+    dtarr = self.dtarr.tolist()
+    try:
+      ind = dtarr.index(findme)
+    except ValueError:
+      return -1
+    return ind
+
   def save_plot(self, filename, plot_len=0, plot_start=0):
+    fig = pylab.figure()
+    ax = fig.add_subplot(111)
+    
     if plot_len > 0:
-      pylab.plot_date(self.dtarr[plot_start:plot_len+plot_start], self.ys[plot_start:plot_len+plot_start], 'o')
+      ax.plot_date(self.dtarr[plot_start:plot_len+plot_start], self.ys[plot_start:plot_len+plot_start], 'o')
     else:
-      pylab.plot_date(self.dtarr, self.arr, 'o')
+      ax.plot_date(self.dtarr, self.arr, 'o')
 
     if self.ys is None:
       pass
     else:
       # was:  pylab.plot_date(self.dtarr, self.ys, '-')
       if plot_len > 0:
-        pylab.plot_date(self.dtarr[plot_start:plot_len+plot_start], self.ys[plot_start:plot_len+plot_start], '-')
+        ax.plot_date(self.dtarr[plot_start:plot_len+plot_start], self.ys[plot_start:plot_len+plot_start], '-')
       else:
-        pylab.plot_date(self.dtarr, self.ys, '-')
+        ax.plot_date(self.dtarr, self.ys, '-')
 
-    pylab.ylabel('y')
-    pylab.xlabel('x')
+    if self.rcvd_type == 'stock':
+      ax.set_title('Stock Price')
+    elif self.rcvd_type == 'tweet':
+      ax.set_title('Tweet Sentiment')
+    else:
+      pass
 
-    pylab.savefig(filename)
+    ax.set_ylabel('y')
+    ax.set_xlabel('x')
+  
+    labels = ax.get_xticklabels()
+    for label in labels:
+      label.set_rotation(30)
+
+    ax.savefig(filename)
 
   def run_plot(self, plot_len=0, plot_start=0):
-    print "debug output first:"
-    print "*** dtarr: "
-    print self.dtarr
-    print "*** arr: "
-    print self.arr
+    fig = pylab.figure()
+    ax = fig.add_subplot(111)
     
     print "plotting raw datapoints"
     # was:   pylab.plot_date(self.dtarr, self.arr, 'o')
     if plot_len > 0:
-      pylab.plot_date(self.dtarr[plot_start:plot_len+plot_start], self.ys[plot_start:plot_len+plot_start], 'o')
+      ax.plot_date(self.dtarr[plot_start:plot_len+plot_start], self.ys[plot_start:plot_len+plot_start], 'o')
     else:
-      pylab.plot_date(self.dtarr, self.arr, 'o')
+      ax.plot_date(self.dtarr, self.arr, 'o')
 
     # have we interpolated recently?
     if self.ys is None:
@@ -145,13 +159,23 @@ class graphanalysis:
     else:
       print "plotting interpolated datapoints"
       if plot_len > 0:
-        pylab.plot_date(self.dtarr[plot_start:plot_len+plot_start], self.ys[plot_start:plot_len+plot_start], '-')
+        ax.plot_date(self.dtarr[plot_start:plot_len+plot_start], self.ys[plot_start:plot_len+plot_start], '-')
       else:
-        pylab.plot_date(self.dtarr, self.ys, '-')
+        ax.plot_date(self.dtarr, self.ys, '-')
 
-    pylab.ylabel('y')
-    pylab.xlabel('x')
+    if self.rcvd_type == 'stock':
+      ax.set_title('Stock Price')
+    elif self.rcvd_type == 'tweet':
+      ax.set_title('Tweet Sentiment')
+    else:
+      pass
 
+    ax.set_ylabel('y')
+    ax.set_xlabel('x')
+  
+    labels = ax.get_xticklabels()
+    for label in labels:
+      label.set_rotation(30)
 
     pylab.show()
 
@@ -228,6 +252,9 @@ if __name__ == "__main__":
   print "plot it!"
   twt.run_plot()
 
+  # example of showing stocks based on twitter date data
   stk.run_plot(twt.length(), stk.starts_within(twt))
 
-
+  # example of showing stocks based on arbritrary date selection
+  dt = datetime(2013,1,30)
+  stk.run_plot(10, stk.get_date_loc(dt))
