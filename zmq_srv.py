@@ -111,7 +111,7 @@ while True:
 	companyList = []
 	
 	for row in c.execute("select distinct company from tweets"):
-		companyList.append(row)
+		companyList.append(row[0])
 
         message = json.dumps(companyList)
         socket.send(message)
@@ -122,10 +122,47 @@ while True:
 	print "received query for list of dates"
 	companyDates = []
 
-	for row in c.execute("select date from tweets where company = '%s'" % (rcvd['company'])):
-		companyDates.append(row)
+	previouslyUsed = []
+	for row in c.execute("select distinct timestamp from tweets where company = '%s'" % (rcvd['company'])):
+		if(row[0][0:10] not in previouslyUsed):
+			companyDates.append(row[0][0:10])
+			previouslyUsed.append(row[0][0:10])
 
 	message = json.dumps(companyDates)
+	socket.send(message)
+
+
+    elif rcvd['type'] == 'gui_tweet_pull':
+	print "recieved query for tweet pull"
+	tweetInfo = {}
+
+	for i in range(len(rcvd['companies'])):
+		start = rcvd['start_dates'][i-1]
+		end = rcvd['end_dates'][i-1]
+
+		startSum = int(start[0:4])*1000 + int(start[5:7])*10 + int(start[8:10])
+		endSum = int(end[0:4])*1000 + int(end[5:7])*10 + int(end[8:10])
+
+		tweetInfo[rcvd['companies'][i-1]] = []
+		pos = 0
+		neg = 0
+		total = 0
+
+		for row in c.execute("select * from tweets where company = '%s'" % (rcvd['companies'][i-1].lower())):
+			rowSum = int(row[1][0:4])*1000 + int(row[1][5:7])*10 + int(row[1][8:10])
+			if(rowSum >= startSum and rowSum <= endSum):
+				if(row[3] == 'pos'):
+					pos = pos+1
+				else:
+					neg = neg+1
+				total = total+1
+
+		tweetInfo[rcvd['companies'][i-1]].append(total)
+		tweetInfo[rcvd['companies'][i-1]].append(pos)
+		tweetInfo[rcvd['companies'][i-1]].append(neg)
+
+	print tweetInfo
+	message = json.dumps(tweetInfo)
 	socket.send(message)
 	
 

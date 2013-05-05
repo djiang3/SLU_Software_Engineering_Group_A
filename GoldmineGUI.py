@@ -1,4 +1,3 @@
-
 from Tkinter import *
 from PIL import Image, ImageTk
 import re
@@ -6,6 +5,7 @@ import os
 import zmq
 import urllib2
 import json
+import graphanalysis
 
 #string constants
 ALPHANUMERIC_UNDERSCORE = "^[a-zA-Z0-9_ ]*$"
@@ -17,76 +17,72 @@ ALERT_NO_SERVER_CONNECTION = 2
 ALERT_FAILED_SENTIMENT_ANALYZER = 3
 ALERT_FAILED_GET_TWEETS = 4
 ALERT_FAILED_FINANCE_INFO = 5
+ALERT_DATE_RANGE_ERROR = 6
 
 MAX_LENGTH_COMPANY_NAME = 32
 
 ALERT_ARRAY = ["Invalid Input", "No Network Connection", "Server Problems", \
-		"Sentiment Analyzer Failure", "Aaron's Fault...", "Floundering Financials"]
+		"Sentiment Analyzer Failure", "Aaron's Fault...", "Floundering Financials", "Invalid Date Range"]
 
 
 class Application(Frame):
 
 	def __init__(self, parent, socket):
 		Frame.__init__(self, parent, background="white")
+
+	#---------Class Variables---------------
 		self.parent = parent
 		self.companies = []
 		self.socket = socket
+		self.previousSelectedCompany = ""
 
-		self.parent.title("GoldMine")		
+		self.companiesAdded = []
+		self.startDatesAdded = []
+		self.endDatesAdded = []
 
-		self.companyListBox = Listbox(self.parent)
-		self.companyListBox.pack(expand=1)
+		self.listViewList = []
 
-		self.topLabel = Label(self.parent, text="Please Choose a Company From the List:")
-		self.topLabel.pack()
-		
-		#self.enterNameMax = MaxLengthEntry(self.parent, maxLength=MAX_LENGTH_COMPANY_NAME)
-		#self.enterNameMax.pack()
+		self.tweetInfoDict = {}
+		self.stockInfoDict = {}
 
-		self.listCompanies = self.refreshCompanyList()
-		self.listVariable = StringVar()
-		self.listVariable.set(self.listCompanies[0])
-		self.companyDrop = OptionMenu(self.parent, self.listVariable, *self.listCompanies)
-		self.companyDrop.pack()
 
-		self.addButton = Button(self.parent, text="+", command=self.addCompany)
-		self.addButton.pack()
+		self.parent.title("GoldMine")
 
-		self.searchButton = Button(self.parent, text="Get My Data", command=self.retreiveData)
-		self.searchButton.pack()
+		#self.columnconfigure(1, weight=1)
+		#self.columnconfigure(7, pad=7)
+		#self.rowconfigure(1, weight=1)
+		#self.rowconfigure(7, pad=7)
 
-		self.refreshButton = Button(self.parent, text="Refresh Company List", command=self.refreshCompanyList)
-		self.refreshButton.pack()
-		#self.restoreMainMenu()
-		
+		self.createMainMenuObjects()
+		self.displayMainMenu()
+
 
 	def addCompany(self):
-		company = self.listVariable.get()
-		newCompany = ""
-		if(company != ""):
-			self.companyListBox.insert(END, company)
+		company = self.listVariableCompany.get()
+		startDate = self.listVariableStartDate.get()
+		endDate = self.listVariableEndDate.get()
 
-	#use to poulate list
-	def parseInputForPresentation(self, input):
-		input = self.genericParse(input)
-		input = input.title()
+		startYear = int(startDate[0:4])
+		endYear = int(endDate[0:4])
+		startMonth = int(startDate[5:7])
+		endMonth = int(endDate[5:7])
+		startDay = int(startDate[8:10])
+		endDay = int(endDate[8:10])
 
-		return input
-		
-	#use for refresh
-	def parseInputForGetTweets(self, input):
-		input = self.genericParse(input)
-		input = input.replace(" ", "_")
-
-		return input
-
-
-	def genericParse(self, input):
-		input = input.lstrip()
-                input = input.rstrip()
-                input = input.lower()
-
-		return input
+		if(company != "" and company not in self.companiesAdded):
+			if(endYear < startYear):
+				self.showAlertDialogue(ALERT_DATE_RANGE_ERROR)
+			elif(endMonth < startMonth):
+				self.showAlertDialogue(ALERT_DATE_RANGE_ERROR)
+			elif(endDay < startDay):
+				self.showAlertDialogue(ALERT_DATE_RANGE_ERROR)
+			else:
+				self.companyListBox.insert(END, company)
+				self.companiesAdded.append(company)
+				self.startDateListBox.insert(END, startDate)
+				self.startDatesAdded.append(startDate)
+				self.endDateListBox.insert(END, endDate)
+				self.endDatesAdded.append(endDate)
 
 
 	def showAlertDialogue(self, alertNum):
@@ -97,93 +93,215 @@ class Application(Frame):
 		dismiss = Button(alert, text="Dismiss", command=alert.destroy)
 		dismiss.pack()
 
+
 	def hideMainMenu(self):
-		self.refreshButton.pack_forget()
-		self.companyListBox.pack_forget()
-		self.enterNameMax.pack_forget()
-		self.addButton.pack_forget()
-		self.searchButton.pack_forget()
-		self.refreshButton.pack_forget()
-		self.topLabel.pack_forget()
+		self.refreshButton.grid_forget()
+		self.companyListBox.grid_forget()
+		self.startDateListBox.grid_forget()
+		self.endDateListBox.grid_forget()
+		self.companyLabel.grid_forget()
+		self.startDateLabel.grid_forget()
+		self.endDateLabel.grid_forget()
+		self.addButton.grid_forget()
+		self.retrieveDataButton.grid_forget()
+		self.refreshButton.grid_forget()
+		self.companyDrop.grid_forget()
+		self.startDateDrop.grid_forget()
+		self.endDateDrop.grid_forget()
 
-	def hideSentimentMenu(self):
-		self.label1.pack_forget()
-		self.label2.pack_forget()
-		self.graph1.pack_forget()
-		self.graph2.pack_forget()
-		self.backSentiment.pack_forget()
+	
+	def displayMainMenu(self):
+		self.companyLabel.grid(row=0, column=0, columnspan=1, rowspan=1, padx=5, sticky=W+N)
+		self.startDateLabel.grid(row=0, column=2, columnspan=1, rowspan=1, padx=5, sticky=W+N)
+		self.endDateLabel.grid(row=0, column=4, columnspan=1, rowspan=1, padx=5, sticky=W+N)
+		self.companyListBox.grid(row=1, column=0, columnspan=1, rowspan=2, padx=5, sticky=E+W+S+N)
+		self.startDateListBox.grid(row=1, column=2, columnspan=1, rowspan=2, padx=5, sticky=E+W+S+N)
+		self.endDateListBox.grid(row=1, column=4, columnspan=1, rowspan=2, padx=5, sticky=E+W+S+N)
+		self.companyDrop.grid(row=4, column=0, columnspan=1, rowspan=1, padx=5, sticky=E+W+S)
+		self.startDateDrop.grid(row=4, column=2, columnspan=1, rowspan=1, padx=5, sticky=E+W+S)
+		self.endDateDrop.grid(row=4, column=4, columnspan=1, rowspan=1, padx=5, sticky=E+W+S)
+		self.addButton.grid(row=4, column=5, columnspan=1, rowspan=1, padx=5, sticky=W+S)
+		self.retrieveDataButton.grid(row=7, column=6, columnspan=1, rowspan=1, padx=5, sticky=E+W+S)
+		self.refreshButton.grid(row=7, column=0, columnspan=1, rowspan=1, padx=5, sticky=E+W+S)
 
-	def restoreMainMenu(self):
-		self.hideSentimentMenu()
+	def createMainMenuObjects(self):
 
-		self.companyListBox.pack(expand=1)
-		self.topLabel.pack()
-		self.enterNameMax.pack()
-		self.addButton.pack()
-		self.searchButton.pack()
-		self.refreshButton.pack()
+		self.companyLabel = Label(self.parent, text="Company:")
+		self.startDateLabel = Label(self.parent, text="Start Date:")
+		self.endDateLabel = Label(self.parent, text="End Date:")
 
-	def showGraph(self):
-		self.hideSentimentMenu()
+		self.companyListBox = Listbox(self.parent)
+		
+		self.startDateListBox = Listbox(self.parent)
 
-		self.graphLabel = Label(self.parent, text="Move Along. Nothing to See Here...")
-		self.graphLabel.pack(expand=1)
-		self.backGraph = Button(self.parent, text="Back", command=self.restoreSentiment)
-		self.backGraph.pack(side=BOTTOM)
+		self.endDateListBox = Listbox(self.parent)
 
-	def restoreSentiment(self):
-		self.hideGraph()
+		companies = self.refreshCompanyList()
+		self.listCompanies = companies
+		self.listVariableCompany = StringVar()
+		self.listVariableCompany.set(self.listCompanies[0])
+		self.companyDrop = OptionMenu(self.parent, self.listVariableCompany, *self.listCompanies)
 
-		self.label1.pack()
-		self.graph1.pack()
-		self.label2.pack()
-		self.graph2.pack()
-		self.backSentiment.pack(side=BOTTOM)
+		startDates = self.refreshDateList()
+		self.listStartDates = startDates
+		self.listVariableStartDate = StringVar()
+		self.listVariableStartDate.set(self.listStartDates[0])
+		self.startDateDrop = OptionMenu(self.parent, self.listVariableStartDate, *self.listStartDates)
+
+		self.listEndDates = startDates
+		self.listVariableEndDate = StringVar()
+		self.listVariableEndDate.set(self.listEndDates[0])
+		self.endDateDrop = OptionMenu(self.parent, self.listVariableEndDate, *self.listEndDates)
+
+		self.addButton = Button(self.parent, text="+", command=self.addCompany)
+
+		self.retrieveDataButton = Button(self.parent, text="Get My Data", command=self.retrieveData)
+
+		self.refreshButton = Button(self.parent, text="Refresh Company List", command=self.refreshCompanyList)
+
+	
+	def createCompanyInfoObjects(self, companyInfo):
+		self.listViewList = []
+		offset = 0
+		for c in companyInfo:
+			newListView = self.ListView(self, c, companyInfo[c][0], companyInfo[c][1], companyInfo[c][2], rowOffset=offset)
+			self.listViewList.append(newListView)
+			offset = offset + 1
+
+		self.companyInfoBackButton = Button(self.parent, text="Back", command=self.companyInfoBack)
 
 
-	def hideGraph(self):
-		self.graphLabel.pack_forget()
-		self.backGraph.pack_forget()
+	def displayCompanyInfo(self):
+		self.hideMainMenu()
 
-	def retreiveData(self):
-		return 0
+		for lv in self.listViewList:
+			lv.display()
+
+		self.companyInfoBackButton.grid(row=7, column=0, columnspan=1, rowspan=1, padx=5, sticky=W+N)
+
+
+	def hideCompanyInfo(self):
+		for lv in self.listViewList:
+			lv.forget()
+
+		self.companyInfoBackButton.grid_forget()			
+
+
+
+	def retrieveData(self):
+		if(len(self.companiesAdded) > 0):
+			tempData = []
+
+			messageDict = {'type':'gui_tweet_pull', 'companies':self.companiesAdded, 'start_dates':self.startDatesAdded, 'end_dates':self.endDatesAdded}
+			message = json.dumps(messageDict)
+			self.socket.send(message)
+			message = self.socket.recv()
+			rcvd = json.loads(message)
+			
+			self.createCompanyInfoObjects(rcvd)
+			self.displayCompanyInfo()
+
+		else:
+			return 0
+		
 
 
 	def refreshCompanyList(self):
-		tempCompanies = []
 		dict = {'type': 'gui_get_companies'}
-		message = json.dumps(dict)
+		list = self.refreshListFromDB(dict)
+
+		return list
+
+
+	def refreshDateList(self):
+		company = self.listVariableCompany.get().lower()
+		dict = {'type': 'gui_get_dates', 'company': company}
+		list = self.refreshListFromDB(dict)
+
+		return list
+
+
+	def refreshListFromDB(self, messageDict):
+		tempData = []
+		message = json.dumps(messageDict)
 		self.socket.send(message)
 		message = self.socket.recv()
 		rcvd = json.loads(message)
-		
 		for r in rcvd:
-			tempCompanies.append(r[0].title())
-		
-		print tempCompanies
-		return tempCompanies
-		
-		
+			tempData.append(r.title())
+
+		return tempData
+
+
+	def onCompanySelect(self):
+		currentCompany = self.listVariableCompany.get()
+		if(self.previousSelectedCompany != currentCompany):
+			newDates = self.refreshDateList()
+			sMenu = self.startDateDrop['menu']
+			sMenu.delete(0, END)
+			eMenu = self.endDateDrop['menu']
+			eMenu.delete(0, END)
+
+			for nd in newDates:
+				sMenu.add_command(label=nd, command=lambda v=self.listVariableStartDate, l=nd: v.set(l))
+				eMenu.add_command(label=nd, command=lambda v=self.listVariableEndDate, l=nd: v.set(l))
+			
+			self.listVariableStartDate.set(newDates[0])
+			self.listVariableEndDate.set(newDates[0])
+
+			self.previousSelectedCompany = currentCompany
+
+		self.parent.after(250, self.onCompanySelect)
 
 	
-class MaxLengthEntry(Entry):
-
-	def __init__(self, parent, value="", maxLength=None, **kw):
-		self.maxLength = maxLength
-		apply(Entry.__init__, (self, parent), kw)
-
-	def validate(self, value):
-		if self.maxLength:
-			value = value[:self.maxLength]
-		return value
+	def showGraph(self, company):
+		return 0
 
 
-#def checkNetworkConnection():
-#	try:
-#		connect = urllib2.urlopen('http://www.google.com', timeout=1)
-#		return True
-#	except urllib.URLError as ue:
-#		return False
+	def companyInfoBack(self):
+		self.hideCompanyInfo()
+		self.displayMainMenu()
+
+
+
+	class ListView:
+		
+		def __init__(self, app, company, numTweets, posTweets, negTweets, rowOffset=0):
+			self.app = app
+			self.parent = app.parent
+			self.company = company
+			self.numTweets = numTweets
+			self.posTweets = posTweets
+			self.negTweets = negTweets
+			self.rowOffset = rowOffset
+
+			self.createDisplayObjects()
+
+		def createDisplayObjects(self):
+			self.companyLabel = Label(self.parent, text=self.company)
+			self.tweetsLabel = Label(self.parent, text="Tweets: %s" % (self.numTweets))
+			self.posTweetsLabel = Label(self.parent, text="Pos: %s" % (self.posTweets))
+			self.negTweetsLabel = Label(self.parent, text="Neg: %s" % (self.negTweets))
+			self.graphButton = Button(self.parent, text="View Graphs", command=self.showGraph)
+
+		def display(self):
+			row = 2*self.rowOffset
+			self.companyLabel.grid(row=row, column=0, columnspan=1, rowspan=1, padx=5, sticky=W+N)
+			self.tweetsLabel.grid(row=row+1, column=1, columnspan=1, rowspan=1, padx=5, sticky=W+N)
+			self.posTweetsLabel.grid(row=row+1, column=2, columnspan=1, rowspan=1, padx=5, sticky=W+N)
+			self.negTweetsLabel.grid(row=row+1, column=3, columnspan=1, rowspan=1, padx=5, sticky=W+N)
+			self.graphButton.grid(row=row, column=4, columnspan=1, rowspan=1, padx=5, sticky=W+N)
+
+		def forget(self):
+			self.companyLabel.grid_forget()
+			self.tweetsLabel.grid_forget()
+			self.posTweetsLabel.grid_forget()
+			self.negTweetsLabel.grid_forget()
+			self.graphButton.grid_forget()
+
+		def showGraph(self):
+			self.app.showGraph(self.company)
+
 
 
 def main():
@@ -211,10 +329,9 @@ def main():
 
 	root.geometry('%dx%d+0+0' % (width, height))
 
-	print width
-	print height
-
 	app = Application(root, socket)
+
+	root.after(250, app.onCompanySelect)
 	root.mainloop()
 
 
