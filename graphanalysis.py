@@ -98,7 +98,54 @@ class graphanalysis:
 
   def length(self):
     return self.xs.size
-
+  
+  def correlation(self,other,delay = 0):
+    """self is stock, other is tweet score,delay is the day between this two sets of data"""
+    i = self.starts_within(other) # stk is larger
+    cor_list = []
+    if (i > -1):
+      s_size = self.length() - i - delay
+      start = i + delay
+      if (s_size > other.length()):
+        l_time = other.length()
+      else:
+        l_time = s_size
+      for m in range(l_time):
+#for i in range(len(self.dtarr)-delay):
+#print "arr",self.arr[i],"another arr",other.arr[i]
+        cor_list.append([self.arr[start + m],other.arr[m]])
+        cor_list.sort(key=lambda tup:tup[1])  
+    else:
+       j = other.starts_within(self) #twt is larger
+       if (j > -1):
+         t_size = other.length() - i + delay
+         start = i - delay
+         if (t_size > self.length()):
+           l_time = self.length()
+         else:
+           l_time = t_size
+         for m in range(l_time):
+           cor_list.append([self.arr[m],other.arr[j-delay]])
+           cor_list.sort(key=lambda tup:tup[1])
+       else:
+         print "Not related"
+         return
+    self.dtarr = [y[1] for y in cor_list]
+    self.arr = [x[0] for x in cor_list]
+    data = numpy.array([[y[1] for y in cor_list], [x[0] for x in cor_list]])
+    cor_coe = numpy.corrcoef(data)
+    print "The correlation coefficient number is ", cor_coe
+    
+    """
+    print cor_list
+    #pylab.plot_date([x[1] for x in cor_list],[y[0] for y in cor_list])
+    self.xs = pylab.arrange(0, len(cor_list),1)
+    self.coeff = np.polyfit(self.xs, [y[0] for y in cor_list],10)
+    self.polynom = np.poly1d(self.coeff)
+    self.ys = self.polynom(self.xs)
+    self.run_plot()
+      #self.xs = pylab.arange(0,len(self.dtarr)-delay,1)
+    """
   def correlate(self, other):
     # use: self.arr, other.arr, and call scipy's correlation function
     pass
@@ -227,7 +274,9 @@ if __name__ == "__main__":
   #twt.interpolate(10)
   print "plot it!"
   twt.run_plot()
-
-  stk.run_plot(twt.length(), stk.starts_within(twt))
+  
+  stk.correlation(twt)
+  stk.run_plot()
+  #stk.run_plot(twt.length(), stk.starts_within(twt))
 
 
