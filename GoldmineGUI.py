@@ -111,6 +111,7 @@ class Application(Frame):
 
 	
 	def displayMainMenu(self):
+		self.spaceLabel.grid(row=0, column=0, columnspan=1, rowspan=1, padx=5, pady=50, sticky=W+N)
 		self.companyLabel.grid(row=0, column=0, columnspan=1, rowspan=1, padx=5, sticky=W+N)
 		self.startDateLabel.grid(row=0, column=2, columnspan=1, rowspan=1, padx=5, sticky=W+N)
 		self.endDateLabel.grid(row=0, column=4, columnspan=1, rowspan=1, padx=5, sticky=W+N)
@@ -125,7 +126,7 @@ class Application(Frame):
 		self.refreshButton.grid(row=7, column=0, columnspan=1, rowspan=1, padx=5, sticky=E+W+S)
 
 	def createMainMenuObjects(self):
-
+		self.spaceLabel = Label(self.parent, text="")
 		self.companyLabel = Label(self.parent, text="Company:")
 		self.startDateLabel = Label(self.parent, text="Start Date:")
 		self.endDateLabel = Label(self.parent, text="End Date:")
@@ -318,7 +319,7 @@ def main():
 
 	root = Tk()
 	
-	image = Image.open("res/gold.jpg")
+	image = Image.open("res/TWAHOO_Finance_Background.jpg")
 	#image.resize((400, 500), Image.ANTIALIAS)
 	background = ImageTk.PhotoImage(image=image)
 	backgroundLabel = Label(root, image=background)
