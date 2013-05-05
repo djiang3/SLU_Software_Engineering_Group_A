@@ -254,8 +254,41 @@ class Application(Frame):
 		self.parent.after(250, self.onCompanySelect)
 
 	
-	def showGraph(self, company):
-		return 0
+  def showGraph(self, company):
+    ## connet to server
+    addr = "localhost"
+    context = zmq.Context()
+
+    socket = context.socket(zmq.REQ)
+    addr = ("tcp://%s:5555" % sys.argv[1])
+    print "connecting to server %s" % addr
+    socket.connect( addr )
+ 
+    ## retreive stock dataset
+    dataset = {'type' : 'stock_pull', 'symbol' : stock, 'clientname' : 'graphanalysis_test'}
+    message = json.dumps(dataset)
+    socket.send(message)
+    
+    message = socket.recv()
+    rcvd = json.loads(message)
+
+    stk = graphanalysis(rcvd, 'stock')
+    stk.interpolate(10)
+
+    ## retreive tweet dataset
+    dataset = {'type' : 'avgSentiment_pull', 'symbol' : bizname, 'dateRange' : '', 'clientname' : 'graphanalysis_test'}
+    message = json.dumps(dataset)
+    socket.send(message)
+
+    message = socket.recv()
+    rcvd = json.loads(message)
+
+    twt = graphanalysis(rcvd, 'tweet')
+    twt.run_plot()
+    stk.run_plot(twt.length(), stk.starts_within(twt))
+
+    ## done
+    return 0
 
 
 	def companyInfoBack(self):
