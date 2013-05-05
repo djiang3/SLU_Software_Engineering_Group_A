@@ -87,6 +87,12 @@ posTrigramList = posTrigrams.split()
 negTrigramList = negTrigrams.split()
 neuTrigramList = neuTrigrams.split()
 
+#Calculate ratios of classifications in raw training data
+
+posRatio = len(posTrigramList)/len(allTrigramList)
+negRatio = len(negTrigramList)/len(allTrigramList)
+neuRatio = len(neuTrigramList)/len(allTrigramList)
+
 # Using naive 'Information Gain' technique, to improve quality of CFD by removing N-grams of similiar frequency
 discardThreshold = 300;
 
