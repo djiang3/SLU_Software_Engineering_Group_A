@@ -70,6 +70,7 @@ for _dict in tweetRawData:
             
         tweetCounter += 1
         sentiment = _dict['sentiment']
+        allTrigrams += trigrams
         if (sentiment == "positive"):
             posTrigrams += trigrams
         elif (sentiment == "negative"):
@@ -86,6 +87,7 @@ neuTrigramsX = ""
 posTrigramList = posTrigrams.split()
 negTrigramList = negTrigrams.split()
 neuTrigramList = neuTrigrams.split()
+allTrigramsList = allTrigrams.split()
 
 #Calculate ratios of classifications in raw training data
 
