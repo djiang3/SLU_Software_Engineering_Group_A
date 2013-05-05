@@ -111,22 +111,20 @@ class Application(Frame):
 
 	
 	def displayMainMenu(self):
-		self.spaceLabel.grid(row=0, column=0, columnspan=1, rowspan=1, padx=5, pady=50, sticky=W+N)
-		self.companyLabel.grid(row=0, column=0, columnspan=1, rowspan=1, padx=5, sticky=W+N)
-		self.startDateLabel.grid(row=0, column=2, columnspan=1, rowspan=1, padx=5, sticky=W+N)
-		self.endDateLabel.grid(row=0, column=4, columnspan=1, rowspan=1, padx=5, sticky=W+N)
-		self.companyListBox.grid(row=1, column=0, columnspan=1, rowspan=2, padx=5, sticky=E+W+S+N)
-		self.startDateListBox.grid(row=1, column=2, columnspan=1, rowspan=2, padx=5, sticky=E+W+S+N)
-		self.endDateListBox.grid(row=1, column=4, columnspan=1, rowspan=2, padx=5, sticky=E+W+S+N)
-		self.companyDrop.grid(row=4, column=0, columnspan=1, rowspan=1, padx=5, sticky=E+W+S)
-		self.startDateDrop.grid(row=4, column=2, columnspan=1, rowspan=1, padx=5, sticky=E+W+S)
-		self.endDateDrop.grid(row=4, column=4, columnspan=1, rowspan=1, padx=5, sticky=E+W+S)
-		self.addButton.grid(row=4, column=5, columnspan=1, rowspan=1, padx=5, sticky=W+S)
-		self.retrieveDataButton.grid(row=7, column=6, columnspan=1, rowspan=1, padx=5, sticky=E+W+S)
-		self.refreshButton.grid(row=7, column=0, columnspan=1, rowspan=1, padx=5, sticky=E+W+S)
+		self.companyLabel.grid(row=0, column=0, columnspan=1, rowspan=1, padx=5, pady=(100,0), sticky=S)
+		self.startDateLabel.grid(row=0, column=2, columnspan=1, rowspan=1, padx=5, pady=(100,0), sticky=S)
+		self.endDateLabel.grid(row=0, column=4, columnspan=1, rowspan=1, padx=5, pady=(100,0), sticky=S)
+		self.companyListBox.grid(row=1, column=0, columnspan=1, rowspan=2, padx=10, sticky=E+W+S+N)
+		self.startDateListBox.grid(row=1, column=2, columnspan=1, rowspan=2, padx=10, sticky=E+W+S+N)
+		self.endDateListBox.grid(row=1, column=4, columnspan=1, rowspan=2, padx=10, sticky=E+S+W+N)
+		self.companyDrop.grid(row=4, column=0, columnspan=1, rowspan=1, padx=10, sticky=E+S+N+W)
+		self.startDateDrop.grid(row=4, column=2, columnspan=1, rowspan=1, padx=10, sticky=E+S+N+W)
+		self.endDateDrop.grid(row=4, column=4, columnspan=1, rowspan=1, padx=10, sticky=E+S+N+W)
+		self.addButton.grid(row=4, column=5, columnspan=1, rowspan=1, sticky=W+S+N)
+		self.retrieveDataButton.grid(row=7, column=4, columnspan=1, rowspan=1, padx=15, pady=25, sticky=E+S+N+W)
+		self.refreshButton.grid(row=7, column=0, columnspan=1, rowspan=1, padx=15, pady=25, sticky=E+S+N+W)
 
 	def createMainMenuObjects(self):
-		self.spaceLabel = Label(self.parent, text="")
 		self.companyLabel = Label(self.parent, text="Company:")
 		self.startDateLabel = Label(self.parent, text="Start Date:")
 		self.endDateLabel = Label(self.parent, text="End Date:")
@@ -179,6 +177,9 @@ class Application(Frame):
 			lv.display()
 
 		self.companyInfoBackButton.grid(row=7, column=0, columnspan=1, rowspan=1, padx=5, sticky=W+N)
+
+		self.companyInfoScrollBar = Scrollbar(self.parent)
+		self.companyInfoScrollBar.pack(side=RIGHT, fill=Y)
 
 
 	def hideCompanyInfo(self):
@@ -279,6 +280,7 @@ class Application(Frame):
 			self.createDisplayObjects()
 
 		def createDisplayObjects(self):
+			self.backgroundLabel = Label(self.parent, text="")
 			self.companyLabel = Label(self.parent, text=self.company)
 			self.tweetsLabel = Label(self.parent, text="Tweets: %s" % (self.numTweets))
 			self.posTweetsLabel = Label(self.parent, text="Pos: %s" % (self.posTweets))
@@ -287,13 +289,15 @@ class Application(Frame):
 
 		def display(self):
 			row = 2*self.rowOffset
-			self.companyLabel.grid(row=row, column=0, columnspan=1, rowspan=1, padx=5, sticky=W+N)
+			self.backgroundLabel.grid(row=row, column=0, columnspan=5, rowspan=2, padx=(25,0), pady=(15,0), stick=N+S+W+E)
+			self.companyLabel.grid(row=row, column=0, columnspan=1, rowspan=1, padx=(25,0), pady=(15,0), sticky=W+N)
 			self.tweetsLabel.grid(row=row+1, column=1, columnspan=1, rowspan=1, padx=5, sticky=W+N)
 			self.posTweetsLabel.grid(row=row+1, column=2, columnspan=1, rowspan=1, padx=5, sticky=W+N)
 			self.negTweetsLabel.grid(row=row+1, column=3, columnspan=1, rowspan=1, padx=5, sticky=W+N)
-			self.graphButton.grid(row=row, column=4, columnspan=1, rowspan=1, padx=5, sticky=W+N)
+			self.graphButton.grid(row=row, column=4, columnspan=1, rowspan=1, padx=5, pady=(15,0), sticky=W+N)
 
 		def forget(self):
+			self.backgroundLabel.grid_forget()
 			self.companyLabel.grid_forget()
 			self.tweetsLabel.grid_forget()
 			self.posTweetsLabel.grid_forget()
@@ -329,11 +333,13 @@ def main():
 	height = background.height()
 
 	root.geometry('%dx%d+0+0' % (width, height))
+	root.resizable(0,0)
 
 	app = Application(root, socket)
 
 	root.after(250, app.onCompanySelect)
 	root.mainloop()
+	sys.exit(0)
 
 
 if __name__=='__main__':
