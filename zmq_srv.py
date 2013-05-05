@@ -134,7 +134,7 @@ while True:
 
     elif rcvd['type'] == 'gui_tweet_pull':
 	print "recieved query for tweet pull"
-	tweetInfo = []
+	tweetInfo = {}
 
 	for i in range(len(rcvd['companies'])):
 		start = rcvd['start_dates'][i-1]
@@ -143,11 +143,25 @@ while True:
 		startSum = int(start[0:4])*1000 + int(start[5:7])*10 + int(start[8:10])
 		endSum = int(end[0:4])*1000 + int(end[5:7])*10 + int(end[8:10])
 
+		tweetInfo[rcvd['companies'][i-1]] = []
+		pos = 0
+		neg = 0
+		total = 0
+
 		for row in c.execute("select * from tweets where company = '%s'" % (rcvd['companies'][i-1].lower())):
 			rowSum = int(row[1][0:4])*1000 + int(row[1][5:7])*10 + int(row[1][8:10])
 			if(rowSum >= startSum and rowSum <= endSum):
-				tweetInfo.append(row)
+				if(row[3] == 'pos'):
+					pos = pos+1
+				else:
+					neg = neg+1
+				total = total+1
 
+		tweetInfo[rcvd['companies'][i-1]].append(total)
+		tweetInfo[rcvd['companies'][i-1]].append(pos)
+		tweetInfo[rcvd['companies'][i-1]].append(neg)
+
+	print tweetInfo
 	message = json.dumps(tweetInfo)
 	socket.send(message)
 	
