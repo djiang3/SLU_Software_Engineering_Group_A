@@ -6,6 +6,8 @@ import sys
 import pprint
 import numpy
 
+TICKER_SYMBOL_DICT = {'google':'GOOG', 'ibm':'IBM', 'amazon':'AMZN', 'microsoft':'MSFT'}
+
 def main(serverAddress, company):
       #company = sys.argv[2]
       #year = sys.argv[3]
@@ -40,11 +42,11 @@ def main(serverAddress, company):
       
       for row in rcvd:
          if row[1] in dailyNumTweets.keys():
-            if (row[3] == 'pos'):
+            if (row[3] == 'positive'):
                dailyPositive[row[1]] += 1
                dailyAverage[row[1]] += 1
                dailyNumTweets[row[1]] += 1
-            elif (row[3] == 'neg'):
+            elif (row[3] == 'negative'):
                dailyNegative[row[1]] += 1
                dailyAverage[row[1]] -= 1
                dailyNumTweets[row[1]] += 1               
@@ -58,11 +60,11 @@ def main(serverAddress, company):
             dailyAverage[row[1]] = 0
             dailyNumTweets[row[1]] = 0
             
-            if (row[3] == 'pos'):
+            if (row[3] == 'positive'):
                dailyPositive[row[1]] += 1
                dailyAverage[row[1]] += 1
                dailyNumTweets[row[1]] += 1
-            elif (row[3] == 'neg'):
+            elif (row[3] == 'negative'):
                dailyNegative[row[1]] += 1
                dailyAverage[row[1]] -= 1
                dailyNumTweets[row[1]] += 1               
@@ -75,7 +77,7 @@ def main(serverAddress, company):
          avgScore = dailyAverage[date]/dailyNumTweets[date]
          print "%s scored an average sentiment of %f on %s" % (company, avgScore,date)
       
-         dataset = {'type' : 'avgSentiment_push', 'dateRange' : date, 'company' : company, 'averageValue' : avgScore, 'positive' : dailyPositive[date], 'negative' : dailyNegative[date], 'neutral' : dailyNeutral[date], 'dataVolume' : dailyNumTweets[date]}
+         dataset = {'type' : 'avgSentiment_push', 'dateRange' : date, 'company' : TICKER_SYMBOL_DICT[company], 'averageValue' : avgScore, 'positive' : dailyPositive[date], 'negative' : dailyNegative[date], 'neutral' : dailyNeutral[date], 'dataVolume' : dailyNumTweets[date]}
       
          message = json.dumps(dataset)
          socket.send(message)

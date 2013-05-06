@@ -5,7 +5,7 @@ import os
 import zmq
 import urllib2
 import json
-import graphanalysis
+import graphanalysis as g
 
 #string constants
 ALPHANUMERIC_UNDERSCORE = "^[a-zA-Z0-9_ ]*$"
@@ -24,16 +24,19 @@ MAX_LENGTH_COMPANY_NAME = 32
 ALERT_ARRAY = ["Invalid Input", "No Network Connection", "Server Problems", \
 		"Sentiment Analyzer Failure", "Aaron's Fault...", "Floundering Financials", "Invalid Date Range"]
 
+TICKER_SYMBOL_DICT = {'Google':'GOOG', 'Ibm':'IBM', 'Amazon':'AMZN', 'Microsoft':'MSFT'}
+
 
 class Application(Frame):
 
-	def __init__(self, parent, socket):
+	def __init__(self, parent, address):
 		Frame.__init__(self, parent, background="white")
 
 	#---------Class Variables---------------
 		self.parent = parent
 		self.companies = []
-		self.socket = socket
+		self.address = address
+
 		self.previousSelectedCompany = ""
 
 		self.companiesAdded = []
@@ -111,21 +114,20 @@ class Application(Frame):
 
 	
 	def displayMainMenu(self):
-		self.companyLabel.grid(row=0, column=0, columnspan=1, rowspan=1, padx=5, sticky=W+N)
-		self.startDateLabel.grid(row=0, column=2, columnspan=1, rowspan=1, padx=5, sticky=W+N)
-		self.endDateLabel.grid(row=0, column=4, columnspan=1, rowspan=1, padx=5, sticky=W+N)
-		self.companyListBox.grid(row=1, column=0, columnspan=1, rowspan=2, padx=5, sticky=E+W+S+N)
-		self.startDateListBox.grid(row=1, column=2, columnspan=1, rowspan=2, padx=5, sticky=E+W+S+N)
-		self.endDateListBox.grid(row=1, column=4, columnspan=1, rowspan=2, padx=5, sticky=E+W+S+N)
-		self.companyDrop.grid(row=4, column=0, columnspan=1, rowspan=1, padx=5, sticky=E+W+S)
-		self.startDateDrop.grid(row=4, column=2, columnspan=1, rowspan=1, padx=5, sticky=E+W+S)
-		self.endDateDrop.grid(row=4, column=4, columnspan=1, rowspan=1, padx=5, sticky=E+W+S)
-		self.addButton.grid(row=4, column=5, columnspan=1, rowspan=1, padx=5, sticky=W+S)
-		self.retrieveDataButton.grid(row=7, column=6, columnspan=1, rowspan=1, padx=5, sticky=E+W+S)
-		self.refreshButton.grid(row=7, column=0, columnspan=1, rowspan=1, padx=5, sticky=E+W+S)
+		self.companyLabel.grid(row=0, column=0, columnspan=1, rowspan=1, padx=5, pady=(100,0), sticky=S)
+		self.startDateLabel.grid(row=0, column=2, columnspan=1, rowspan=1, padx=5, pady=(100,0), sticky=S)
+		self.endDateLabel.grid(row=0, column=4, columnspan=1, rowspan=1, padx=5, pady=(100,0), sticky=S)
+		self.companyListBox.grid(row=1, column=0, columnspan=1, rowspan=2, padx=10, sticky=E+W+S+N)
+		self.startDateListBox.grid(row=1, column=2, columnspan=1, rowspan=2, padx=10, sticky=E+W+S+N)
+		self.endDateListBox.grid(row=1, column=4, columnspan=1, rowspan=2, padx=10, sticky=E+S+W+N)
+		self.companyDrop.grid(row=4, column=0, columnspan=1, rowspan=1, padx=10, sticky=E+S+N+W)
+		self.startDateDrop.grid(row=4, column=2, columnspan=1, rowspan=1, padx=10, sticky=E+S+N+W)
+		self.endDateDrop.grid(row=4, column=4, columnspan=1, rowspan=1, padx=10, sticky=E+S+N+W)
+		self.addButton.grid(row=4, column=5, columnspan=1, rowspan=1, sticky=W+S+N)
+		self.retrieveDataButton.grid(row=7, column=4, columnspan=1, rowspan=1, padx=15, pady=25, sticky=E+S+N+W)
+		self.refreshButton.grid(row=7, column=0, columnspan=1, rowspan=1, padx=15, pady=25, sticky=E+S+N+W)
 
 	def createMainMenuObjects(self):
-
 		self.companyLabel = Label(self.parent, text="Company:")
 		self.startDateLabel = Label(self.parent, text="Start Date:")
 		self.endDateLabel = Label(self.parent, text="End Date:")
@@ -194,10 +196,11 @@ class Application(Frame):
 
 			messageDict = {'type':'gui_tweet_pull', 'companies':self.companiesAdded, 'start_dates':self.startDatesAdded, 'end_dates':self.endDatesAdded}
 			message = json.dumps(messageDict)
-			self.socket.send(message)
-			message = self.socket.recv()
+			socket = self.createSocket()
+			socket.send(message)
+			message = socket.recv()
 			rcvd = json.loads(message)
-			
+
 			self.createCompanyInfoObjects(rcvd)
 			self.displayCompanyInfo()
 
@@ -224,8 +227,9 @@ class Application(Frame):
 	def refreshListFromDB(self, messageDict):
 		tempData = []
 		message = json.dumps(messageDict)
-		self.socket.send(message)
-		message = self.socket.recv()
+		socket = self.createSocket()
+		socket.send(message)
+		message = socket.recv()
 		rcvd = json.loads(message)
 		for r in rcvd:
 			tempData.append(r.title())
@@ -254,46 +258,48 @@ class Application(Frame):
 		self.parent.after(250, self.onCompanySelect)
 
 	
-  def showGraph(self, company):
-    ## connet to server
-    addr = "localhost"
-    context = zmq.Context()
-
-    socket = context.socket(zmq.REQ)
-    addr = ("tcp://%s:5555" % sys.argv[1])
-    print "connecting to server %s" % addr
-    socket.connect( addr )
- 
-    ## retreive stock dataset
-    dataset = {'type' : 'stock_pull', 'symbol' : stock, 'clientname' : 'graphanalysis_test'}
-    message = json.dumps(dataset)
-    socket.send(message)
+	def showGraph(self, company):
+		## retreive stock dataset
+		dataset = {'type' : 'stock_pull', 'symbol' : TICKER_SYMBOL_DICT[company], 'clientname' : 'graphanalysis_test'}
+		message = json.dumps(dataset)
+		socket = self.createSocket()
+		socket.send(message)
     
-    message = socket.recv()
-    rcvd = json.loads(message)
+		message = socket.recv()
+		rcvd = json.loads(message)
 
-    stk = graphanalysis(rcvd, 'stock')
-    stk.interpolate(10)
+		stk = g.graphanalysis(rcvd, 'stock')
+		stk.interpolate(10)
+		stk.run_plot()
 
-    ## retreive tweet dataset
-    dataset = {'type' : 'avgSentiment_pull', 'symbol' : bizname, 'dateRange' : '', 'clientname' : 'graphanalysis_test'}
-    message = json.dumps(dataset)
-    socket.send(message)
+		## retreive tweet dataset
+		#dataset = {'type' : 'avgSentiment_pull', 'symbol' : TICKER_SYMBOL_DICT[company], 'dateRange' : 'doesntmatter', 'clientname' : 'graphanalysis_test'}
+		#message = json.dumps(dataset)
+		#socket.send(message)
 
-    message = socket.recv()
-    rcvd = json.loads(message)
+		#message = socket.recv()
+		#rcvd = json.loads(message)
 
-    twt = graphanalysis(rcvd, 'tweet')
-    twt.run_plot()
-    stk.run_plot(twt.length(), stk.starts_within(twt))
+		#twt = g.graphanalysis(rcvd, 'tweet')
+		#twt.run_plot()
+		#stk.run_plot(twt.length(), stk.starts_within(twt))
 
-    ## done
-    return 0
+		## done
+		return 0
 
 
 	def companyInfoBack(self):
 		self.hideCompanyInfo()
 		self.displayMainMenu()
+
+
+	def createSocket(self):
+		context = zmq.Context()
+		socket = context.socket(zmq.REQ)
+		socket.connect("tcp://%s:5555" % (self.address))
+
+		return socket
+
 
 
 
@@ -311,6 +317,7 @@ class Application(Frame):
 			self.createDisplayObjects()
 
 		def createDisplayObjects(self):
+			self.backgroundLabel = Label(self.parent, text="")
 			self.companyLabel = Label(self.parent, text=self.company)
 			self.tweetsLabel = Label(self.parent, text="Tweets: %s" % (self.numTweets))
 			self.posTweetsLabel = Label(self.parent, text="Pos: %s" % (self.posTweets))
@@ -319,13 +326,15 @@ class Application(Frame):
 
 		def display(self):
 			row = 2*self.rowOffset
-			self.companyLabel.grid(row=row, column=0, columnspan=1, rowspan=1, padx=5, sticky=W+N)
+			self.backgroundLabel.grid(row=row, column=0, columnspan=5, rowspan=2, padx=(25,0), pady=(15,0), stick=N+S+W+E)
+			self.companyLabel.grid(row=row, column=0, columnspan=1, rowspan=1, padx=(25,0), pady=(15,0), sticky=W+N)
 			self.tweetsLabel.grid(row=row+1, column=1, columnspan=1, rowspan=1, padx=5, sticky=W+N)
 			self.posTweetsLabel.grid(row=row+1, column=2, columnspan=1, rowspan=1, padx=5, sticky=W+N)
 			self.negTweetsLabel.grid(row=row+1, column=3, columnspan=1, rowspan=1, padx=5, sticky=W+N)
-			self.graphButton.grid(row=row, column=4, columnspan=1, rowspan=1, padx=5, sticky=W+N)
+			self.graphButton.grid(row=row, column=4, columnspan=1, rowspan=1, padx=5, pady=(15,0), sticky=W+N)
 
 		def forget(self):
+			self.backgroundLabel.grid_forget()
 			self.companyLabel.grid_forget()
 			self.tweetsLabel.grid_forget()
 			self.posTweetsLabel.grid_forget()
@@ -339,20 +348,18 @@ class Application(Frame):
 
 def main():
 
+	if(len(sys.argv) < 2):
+		mainAddress = "localhost"
+	elif(len(sys.argv) > 2):
+		print "Usage: GoldmineGUI.py [ADDR]"
+	else:
+		mainAddress = sys.argv[1]
 
-	#connect to server
-	try:
-		context = zmq.Context()
-		socket = context.socket(zmq.REQ)
-		socket.connect("tcp://localhost:5555")
-	except IOException as ioe:
-		print "Could not connect to server"
-		sys.exit(1)
+	print "Address: %s" % (mainAddress)
 
 	root = Tk()
 	
-	image = Image.open("res/gold.jpg")
-	#image.resize((400, 500), Image.ANTIALIAS)
+	image = Image.open("res/TWAHOO_Finance_Background.jpg")
 	background = ImageTk.PhotoImage(image=image)
 	backgroundLabel = Label(root, image=background)
 	backgroundLabel.place(x=0, y=0)
@@ -361,11 +368,13 @@ def main():
 	height = background.height()
 
 	root.geometry('%dx%d+0+0' % (width, height))
+	root.resizable(0,0)
 
-	app = Application(root, socket)
+	app = Application(root, mainAddress)
 
 	root.after(250, app.onCompanySelect)
 	root.mainloop()
+	sys.exit(0)
 
 
 if __name__=='__main__':
