@@ -141,7 +141,10 @@ class graphanalysis:
     self.run_plot()
       #self.xs = pylab.arange(0,len(self.dtarr)-delay,1)
     """
+<<<<<<< HEAD
 
+=======
+>>>>>>> cac031fab3579bc9496f45c5ef95795ba483470d
   def correlate(self, other):
     # use: self.arr, other.arr, and call scipy's correlation function
     pass
@@ -299,9 +302,16 @@ if __name__ == "__main__":
   #twt.interpolate(10)
   print "plot it!"
   twt.run_plot()
+<<<<<<< HEAD
 
   # example of showing stocks based on twitter date data
   stk.run_plot(twt.length(), stk.starts_within(twt))
+=======
+  
+  stk.correlation(twt)
+  stk.run_plot()
+  #stk.run_plot(twt.length(), stk.starts_within(twt))
+>>>>>>> cac031fab3579bc9496f45c5ef95795ba483470d
 
   # example of showing stocks based on arbritrary date selection
   dt = datetime(2013,1,30)
