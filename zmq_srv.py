@@ -93,6 +93,9 @@ while True:
     elif rcvd['type'] == 'avgSentiment_pull':
         print "recieved query for %s over the date range of %s" % (rcvd['symbol'], rcvd['dateRange'])
         pulled_sentiments = []
+
+	for row in c.execute("select * from trendPoints"):
+		print row
         
         for row in c.execute("SELECT trendID, dateRange, company, averageValue, positive, negative, neutral, dataVolume FROM trendPoints WHERE company = '%s'" % (rcvd['symbol'])):
             #if ((int(row[1][8:10]) == int(rcvd['dateRange'][8:10])) and (int(row[1][0:4]) == int(rcvd['dateRange'][0:4])) and (int(row[1][5:7]) == int(rcvd['dateRange'][5:7]))):
@@ -146,16 +149,23 @@ while True:
 		tweetInfo[rcvd['companies'][i-1]] = []
 		pos = 0
 		neg = 0
+		neu = 0
 		total = 0
 
 		for row in c.execute("select * from tweets where company = '%s'" % (rcvd['companies'][i-1].lower())):
 			rowSum = int(row[1][0:4])*1000 + int(row[1][5:7])*10 + int(row[1][8:10])
 			if(rowSum >= startSum and rowSum <= endSum):
-				if(row[3] == 'pos'):
+				if(row[3] == 'positive'):
 					pos = pos+1
-				else:
+				elif(row[3] == 'negative'):
 					neg = neg+1
+				else:
+					neu = neu+1
+
 				total = total+1
+
+		#do not plan on displaying neutral, implied
+
 
 		tweetInfo[rcvd['companies'][i-1]].append(total)
 		tweetInfo[rcvd['companies'][i-1]].append(pos)
