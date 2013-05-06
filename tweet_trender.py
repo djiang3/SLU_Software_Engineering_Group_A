@@ -36,45 +36,50 @@ def main(serverAddress, company):
       dailyNegative = dict()
       
       for row in rcvd:
-         if row['date'] in dailyNumTweets.keys():
+            row[1] = row[1][0:10]
+      
+      for row in rcvd:
+         if row[1] in dailyNumTweets.keys():
             if (row[3] == 'pos'):
-               dailyPositive[row['date']] += 1
-               dailyAverage[row['date']] += 1
-               dailyNumTweets[row['date']] += 1
+               dailyPositive[row[1]] += 1
+               dailyAverage[row[1]] += 1
+               dailyNumTweets[row[1]] += 1
             elif (row[3] == 'neg'):
-               dailyNegative[row['date']] += 1
-               dailyAverage[row['date']] += 1
-               dailyNumTweets[row['date']] += 1               
+               dailyNegative[row[1]] += 1
+               dailyAverage[row[1]] -= 1
+               dailyNumTweets[row[1]] += 1               
             else:
-               dailyNeutral[row['date']] += 1
-               dailyNumTweets[row['date']] += 1
+               dailyNeutral[row[1]] += 1
+               dailyNumTweets[row[1]] += 1
          else:
-            dailyPositive[row['date']] = 0
-            dailyNegative[row['date']] = 0
-            dailyNeutral[row['date']] = 0
-            dailyAverage[row['date']] = 0
-            dailyNumTweets[row['date']] = 0
+            dailyPositive[row[1]] = 0
+            dailyNegative[row[1]] = 0
+            dailyNeutral[row[1]] = 0
+            dailyAverage[row[1]] = 0
+            dailyNumTweets[row[1]] = 0
             
             if (row[3] == 'pos'):
-               dailyPositive[row['date']] += 1
-               dailyAverage[row['date']] += 1
-               dailyNumTweets[row['date']] += 1
+               dailyPositive[row[1]] += 1
+               dailyAverage[row[1]] += 1
+               dailyNumTweets[row[1]] += 1
             elif (row[3] == 'neg'):
-               dailyNegative[row['date']] += 1
-               dailyAverage[row['date']] += 1
-               dailyNumTweets[row['date']] += 1               
+               dailyNegative[row[1]] += 1
+               dailyAverage[row[1]] -= 1
+               dailyNumTweets[row[1]] += 1               
             else:
-               dailyNeutral[row['date']] += 1
-               dailyNumTweets[row['date']] += 1            
-
+               dailyNeutral[row[1]] += 1
+               dailyNumTweets[row[1]] += 1            
+      
+      print dailyNumTweets.keys()
       for date in dailyNumTweets.keys():
          avgScore = dailyAverage[date]/dailyNumTweets[date]
          print "%s scored an average sentiment of %f on %s" % (company, avgScore,date)
       
-         dataset = {'type' : 'avgSentiment_push', 'dateRange' : date, 'company' : company, 'averageValue' : avgScore, 'positive' : dailyPositive[date], 'negative' : daliyNegative[date], 'neutral' : dailyNeutral[date], 'dataVolume' : dailyNumTweets[date]}
+         dataset = {'type' : 'avgSentiment_push', 'dateRange' : date, 'company' : company, 'averageValue' : avgScore, 'positive' : dailyPositive[date], 'negative' : dailyNegative[date], 'neutral' : dailyNeutral[date], 'dataVolume' : dailyNumTweets[date]}
       
          message = json.dumps(dataset)
          socket.send(message)
+         message = socket.recv()
 
 
 if __name__ == "__main__":
