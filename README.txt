@@ -30,15 +30,16 @@ that range inclusive of the dates given.
 
 ### Populating your tweet database
 
-To populate the database with tweet information, you must run 
-sentiment_analyzer.py. This is then followed by the get_tweets.py program which
-will take in a company name as its search term. get_tweets.py will output a raw
-tweet object to the sentiment_analyzer, which would then process the 
+To populate the database with sorted tweet information, you must run 
+tweet_Tri-Gram_Classifier. This is then followed by the get_tweets.py program which
+will take in a company name(s) as its search term. get_tweets.py will output a raw
+tweet object to the tweet_Tri-Gram_Classifier, which will then process the 
 information and store into the database a formatted dictionary with:
    1) "id" of the tweet.
    2) "date" of the tweet, which is the creation date of that tweet.
    3) "sentiment" of the tweet, either positive or negative.
    4) "company" that the tweet is refering to. 
+   5) "tweet" which is the text of the tweet.
 
 Database Info
 ----------------
@@ -113,6 +114,14 @@ USAGE: "python json_filter.py"
        q = Save and Quit
        [Enter] to skip the tweet.
 
+### json_toolkit ###
 
+The json toolkit is meant to handle a few necessities when dealing with jsons. 
+Currently, it includes two functionalities, which is merging two jsons together
+and checking the integrity of a json file.
+
+USAGE: "python json_toolkit [-m fileA fileB newFileName] [-c file] "
+       -m: merges fileA and fileB, then outputs the combined file as newFileName
+       -c: checks the integrity of a json file
 
 
